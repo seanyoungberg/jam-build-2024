@@ -11,6 +11,13 @@ terraform {
       version = "3.2.2"
     }
   }
+    backend "s3" {
+    bucket         = var.s3_bucket  # Replace this with the actual S3 bucket name
+    key            = "terraform/state"            # Path inside the bucket to store the state file
+    region         = var.region                   # AWS region
+    encrypt        = true                         # Enable server-side encryption of the state file
+    dynamodb_table = "terraform-lock"             # Optional: To avoid race conditions
+  }
 }
 
 provider "aws" {
