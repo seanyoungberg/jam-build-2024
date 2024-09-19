@@ -6,7 +6,7 @@ variable "region" {
 
 variable "s3_bucket" {
   description = "AWS region used to deploy whole infrastructure"
-  type        = string
+  type        = "ts-test"
 }
 # variable "name_prefix" {
 #   description = "Prefix used in names for the resources (VPCs, EC2 instances, autoscaling groups etc.)"
