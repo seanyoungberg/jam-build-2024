@@ -5,9 +5,6 @@ resource "aws_vpc" "vpc" {
   }
 }
 
-provider "aws" {
-  region = "us-east-1" # Change to your preferred region
-}
 
 # VPC
 resource "aws_vpc" "main" {
