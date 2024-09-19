@@ -6,110 +6,87 @@ resource "aws_vpc" "vpc" {
 }
 
 
-# VPC
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+# Create an S3 bucket to store the Terraform state file
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "jamtest"
 
-  tags = {
-    Name = "Test-EC2"
-  }
-}
-
-# Internet Gateway
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "main-igw"
-  }
-}
-
-# Public Subnet
-resource "aws_subnet" "public" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
-  #availability_zone = "us-east-1a" # Change to your preferred availability zone
-
-  tags = {
-    Name = "public-subnet"
-  }
-}
-
-# Route Table for Public Subnet
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
+  # Enable versioning to keep track of changes in the state file
+  versioning {
+    enabled = true
   }
 
   tags = {
-    Name = "public-route-table"
+    Name        = "Terraform State Bucket"
+    Environment = "Production"
   }
 }
 
-# Associate Route Table with Subnet
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
-}
+# Optional: Enable server-side encryption for the state file (recommended)
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state_encryption" {
+  bucket = aws_s3_bucket.terraform_state.id
 
-# Security Group for EC2 instance
-resource "aws_security_group" "ec2_sg" {
-  vpc_id = aws_vpc.main.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Allows SSH from anywhere (adjust as necessary)
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # HTTP access
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # HTTPS access
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "ec2-security-group"
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"  # You can also use "aws:kms" if you want to use KMS
+    }
   }
 }
 
-# EC2 Instance
-resource "aws_instance" "linux_instance" {
-  ami           = "ami-0c55b159cbfafe1f0" # Amazon Linux 2 AMI (replace with the latest one for your region)
-  instance_type = "t2.micro"
+# Optional: Set a bucket policy to restrict access (replace the <your-aws-account-id> with your account ID)
+resource "aws_s3_bucket_policy" "terraform_state_policy" {
+  bucket = aws_s3_bucket.terraform_state.id
 
-  subnet_id              = aws_subnet.public.id
-  security_groups        = [aws_security_group.ec2_sg.name]
-  associate_public_ip_address = true  # To allow internet access
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid       = "AllowRootAndAdminAccess",
+        Effect    = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::<your-aws-account-id>:root"
+        },
+        Action    = "s3:*",
+        Resource  = [
+          "arn:aws:s3:::${aws_s3_bucket.terraform_state.id}",
+          "arn:aws:s3:::${aws_s3_bucket.terraform_state.id}/*"
+        ]
+      },
+      {
+        Sid       = "DenyUnencryptedUploads",
+        Effect    = "Deny",
+        Principal = "*",
+        Action    = "s3:PutObject",
+        Resource  = "arn:aws:s3:::${aws_s3_bucket.terraform_state.id}/*",
+        Condition = {
+          StringNotEquals = {
+            "s3:x-amz-server-side-encryption" = "AES256"
+          }
+        }
+      }
+    ]
+  })
+}
 
-  key_name = "lab-key-pair"  # Replace with your key pair name
+# Configure the DynamoDB table for state locking (to avoid conflicts during concurrent operations)
+resource "aws_dynamodb_table" "terraform_state_lock" {
+  name         = "terraform-state-lock"
+  billing_mode = "PAY_PER_REQUEST"
 
-  tags = {
-    Name = "linux-ec2-instance"
+  hash_key = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
   }
 }
 
-# Elastic IP
-resource "aws_eip" "ec2_eip" {
-  vpc      = true
-  instance = aws_instance.linux_instance.id
+# Backend configuration to store the state in the S3 bucket
+terraform {
+  backend "s3" {
+    bucket         = aws_s3_bucket.terraform_state.bucket
+    key            = "path/to/terraform.tfstate"  # Path inside the bucket
+    region         = "us-east-1"
+    dynamodb_table = aws_dynamodb_table.terraform_state_lock.name  # For state locking
+    encrypt        = true  # Encrypt the state file
+  }
 }
