@@ -15,6 +15,13 @@ variable "ssh_key_name" {
   type        = string
 }
 
+variable "unique_id" {
+  description = "String suffix to apply to resource names that need to be unique"
+  type        = string
+  default     = ""
+}
+
+
 ### VPC
 variable "vpcs" {
   description = <<-EOF

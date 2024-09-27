@@ -121,7 +121,7 @@ module "gwlb" {
 
   for_each = var.gwlbs
 
-  name                             = "${var.name_prefix}${each.value.name}"
+  name                             = "${var.name_prefix}${each.value.name}-${var.unique_id}"
   vpc_id                           = module.subnet_sets[each.value.vpc_subnet].vpc_id
   subnets                          = module.subnet_sets[each.value.vpc_subnet].subnets
   enable_cross_zone_load_balancing = each.value.enable_cross_zone_load_balancing
@@ -269,7 +269,7 @@ data "aws_caller_identity" "this" {}
 data "aws_partition" "this" {}
 
 resource "aws_iam_role" "vm_series_ec2_iam_role" {
-  name               = "${var.name_prefix}vmseries"
+  name               = "${var.name_prefix}vmseries-${var.unique_id}"
   assume_role_policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -319,7 +319,7 @@ EOF
 
 resource "aws_iam_instance_profile" "vm_series_iam_instance_profile" {
 
-  name = "${var.name_prefix}vmseries_instance_profile"
+  name = "${var.name_prefix}vmseries_instance_profile-${var.unique_id}"
   role = aws_iam_role.vm_series_ec2_iam_role.name
 }
 
@@ -333,6 +333,7 @@ module "vm_series_asg" {
   ssh_key_name                    = var.ssh_key_name
   region                          = var.region
   name_prefix                     = var.name_prefix
+  unique_id                       = var.unique_id
   global_tags                     = var.global_tags
   vmseries_version                = each.value.panos_version
   vmseries_product_code           = each.value.vmseries_product_code
@@ -377,8 +378,8 @@ module "bootstrap" {
   for_each = { for vmseries in local.vmseries_instances : "${vmseries.group}-${vmseries.instance}" => vmseries }
   source   = "../../modules/bootstrap"
 
-  iam_role_name             = "${var.name_prefix}tc_vm${each.value.instance}"
-  iam_instance_profile_name = "${var.name_prefix}tc_vm_instance_profile${each.value.instance}"
+  iam_role_name             = "${var.name_prefix}tc_vm${each.value.instance}-${var.unique_id}"
+  iam_instance_profile_name = "${var.name_prefix}tc_vm_instance_profile${each.value.instance}-${var.unique_id}"
 
   prefix      = var.name_prefix
   global_tags = var.global_tags

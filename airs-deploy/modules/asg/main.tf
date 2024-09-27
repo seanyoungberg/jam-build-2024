@@ -171,7 +171,7 @@ data "aws_partition" "this" {}
 
 # IAM role that will be used for Lambda function
 resource "aws_iam_role" "this" {
-  name               = "${var.name_prefix}lambda_iam_role"
+  name               = "${var.name_prefix}lambda_iam_role-${var.unique_id}"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
