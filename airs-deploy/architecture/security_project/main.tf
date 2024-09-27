@@ -172,7 +172,7 @@ data "aws_ebs_default_kms_key" "current" {
 }
 
 resource "aws_iam_role" "spoke_vm_ec2_iam_role" {
-  name               = "${var.name_prefix}spoke_vm"
+  name               = "${var.name_prefix}spoke_vm-${var.unique_id}"
   assume_role_policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -189,7 +189,7 @@ EOF
 
 resource "aws_iam_instance_profile" "spoke_vm_iam_instance_profile" {
 
-  name = "${var.name_prefix}spoke_vm_instance_profile"
+  name = "${var.name_prefix}spoke_vm_instance_profile-${var.unique_id}"
   role = aws_iam_role.spoke_vm_ec2_iam_role.name
 }
 
