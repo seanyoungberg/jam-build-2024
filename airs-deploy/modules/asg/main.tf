@@ -340,7 +340,7 @@ resource "aws_cloudwatch_event_rule" "instance_launch_event_rule" {
   ],
   "detail": {
     "AutoScalingGroupName": [
-      "${var.name_prefix}${var.asg_name}"
+      "${aws_autoscalingplans_scaling_plan.this.name}"
     ]
   }
 }
@@ -360,7 +360,7 @@ resource "aws_cloudwatch_event_rule" "instance_terminate_event_rule" {
   ],
   "detail": {
     "AutoScalingGroupName": [
-      "${var.name_prefix}${var.asg_name}"
+      "${aws_autoscalingplans_scaling_plan.this.name}"
     ]
   }
 }
