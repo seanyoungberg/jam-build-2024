@@ -5,7 +5,7 @@ module "vpc" {
 
   for_each = var.vpcs
 
-  name       = "${var.name_prefix}${each.value.name}"
+  name       = "${var.name_prefix}${each.value.name}-${var.unique_id}"
   cidr_block = each.value.cidr
   #nacls                   = each.value.nacls
   security_groups         = each.value.security_groups

@@ -328,7 +328,7 @@ resource "aws_lambda_permission" "this" {
 }
 
 resource "aws_cloudwatch_event_rule" "instance_launch_event_rule" {
-  name          = "${var.name_prefix}asg_launch"
+  name          = "${var.name_prefix}asg_launch-${var.unique_id}"
   tags          = var.global_tags
   event_pattern = <<EOF
 {
@@ -340,7 +340,7 @@ resource "aws_cloudwatch_event_rule" "instance_launch_event_rule" {
   ],
   "detail": {
     "AutoScalingGroupName": [
-      "${aws_autoscalingplans_scaling_plan.this.name}"
+      "${var.name_prefix}${var.asg_name}-${var.unique_id}"
     ]
   }
 }
@@ -348,7 +348,7 @@ EOF
 }
 
 resource "aws_cloudwatch_event_rule" "instance_terminate_event_rule" {
-  name          = "${var.name_prefix}asg_terminate"
+  name          = "${var.name_prefix}asg_terminate-${var.unique_id}"
   tags          = var.global_tags
   event_pattern = <<EOF
 {
@@ -360,7 +360,7 @@ resource "aws_cloudwatch_event_rule" "instance_terminate_event_rule" {
   ],
   "detail": {
     "AutoScalingGroupName": [
-      "${aws_autoscalingplans_scaling_plan.this.name}"
+      "${var.name_prefix}${var.asg_name}-${var.unique_id}"
     ]
   }
 }
