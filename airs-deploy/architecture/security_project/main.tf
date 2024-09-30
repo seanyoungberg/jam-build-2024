@@ -334,7 +334,7 @@ module "vm_series_asg" {
   region                          = var.region
   name_prefix                     = var.name_prefix
   unique_id                       = var.unique_id
-  global_tags                     = var.global_tags
+  global_tags                     = merge(var.global_tags, { unique_id : var.unique_id })
   vmseries_version                = each.value.panos_version
   vmseries_product_code           = each.value.vmseries_product_code
   max_size                        = each.value.asg.max_size
@@ -367,7 +367,7 @@ module "vm_series_asg" {
   scaling_target_value         = each.value.scaling_plan.target_value
   scaling_statistic            = each.value.scaling_plan.statistic
   scaling_cloudwatch_namespace = each.value.scaling_plan.cloudwatch_namespace
-  scaling_tags                 = merge(each.value.scaling_plan.tags, { prefix : var.name_prefix })
+  scaling_tags                 = merge(each.value.scaling_plan.tags, { unique_id : var.unique_id })
 
   delicense_ssm_param_name = each.value.delicense.ssm_param_name
   delicense_enabled        = each.value.delicense.enabled
