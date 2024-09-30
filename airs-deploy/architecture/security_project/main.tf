@@ -24,7 +24,7 @@ module "subnet_sets" {
   name                = split("-", each.key)[1]
   vpc_id              = module.vpc[split("-", each.key)[0]].id
   has_secondary_cidrs = module.vpc[split("-", each.key)[0]].has_secondary_cidrs
-
+ 
   cidrs = {
     for i in flatten([
       for vk, vv in var.vpcs : [
@@ -223,7 +223,7 @@ module "app_lb" {
 
   for_each = var.spoke_lbs
 
-  name        = "${var.name_prefix}${each.key}"
+  name        = "${var.name_prefix}${each.key}-${var.unique_id}"
   internal_lb = false
   subnets     = { for k, v in module.subnet_sets[each.value.vpc_subnet].subnets : k => { id = v.id } }
   vpc_id      = module.subnet_sets[each.value.vpc_subnet].vpc_id

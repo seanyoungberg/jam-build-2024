@@ -92,7 +92,7 @@ resource "aws_launch_template" "this" {
 
 # Create autoscaling group based on launch template and ALL subnets from var.interfaces
 resource "aws_autoscaling_group" "this" {
-  name                = "${var.name_prefix}${var.asg_name}"
+  name                = "${var.name_prefix}${var.asg_name}-${var.unique_id}"
   vpc_zone_identifier = distinct([for k, v in local.default_eni_subnet_names[0] : v])
   desired_capacity    = var.desired_capacity
   max_size            = var.max_size
@@ -381,7 +381,7 @@ resource "aws_cloudwatch_event_target" "instance_terminate_event" {
 
 resource "aws_autoscalingplans_scaling_plan" "this" {
   count = var.scaling_plan_enabled ? 1 : 0
-  name  = "${var.name_prefix}scaling-plan"
+  name  = "${var.name_prefix}scaling-plan-${var.unique_id}"
   application_source {
     dynamic "tag_filter" {
       for_each = var.scaling_tags
