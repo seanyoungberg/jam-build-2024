@@ -44,7 +44,7 @@ locals {
 
 # Create launch template with a single interface
 resource "aws_launch_template" "this" {
-  name          = "${var.name_prefix}template"
+  name          = "${var.name_prefix}template-${var.unique_id}"
   ebs_optimized = true
   image_id      = coalesce(var.vmseries_ami_id, try(data.aws_ami.this[0].id, null))
   instance_type = var.instance_type
@@ -293,7 +293,7 @@ data "archive_file" "this" {
 
 resource "aws_lambda_function" "this" {
   filename                       = data.archive_file.this.output_path
-  function_name                  = "${var.name_prefix}asg_actions"
+  function_name                  = "${var.name_prefix}asg_actions-${var.unique_id}"
   role                           = aws_iam_role.this.arn
   handler                        = "lambda.lambda_handler"
   source_code_hash               = data.archive_file.this.output_base64sha256
