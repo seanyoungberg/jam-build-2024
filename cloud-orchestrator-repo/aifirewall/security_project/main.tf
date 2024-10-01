@@ -279,21 +279,21 @@ module "app_lb" {
   vpc_id      = module.subnet_sets[each.value.vpc_subnet].vpc_id
 
   balance_rules = {
-    "SSH-traffic" = {
+    "SSH" = {
       protocol    = "TCP"
       port        = "22"
       target_type = "instance"
       stickiness  = true
       targets     = { for vm in each.value.vms : vm => aws_instance.spoke_vms[vm].id }
     }
-    "HTTP-traffic" = {
+    "HTTP" = {
       protocol    = "TCP"
       port        = "80"
       target_type = "instance"
       stickiness  = false
       targets     = { for vm in each.value.vms : vm => aws_instance.spoke_vms[vm].id }
     }
-    "HTTPS-traffic" = {
+    "HTTPS" = {
       protocol    = "TCP"
       port        = "443"
       target_type = "instance"
