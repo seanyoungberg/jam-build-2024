@@ -1,0 +1,23 @@
+# Default values for ai-runtime-security.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Configure vpc endpoint per zone. This makes sure kubernetes
+# traffic is not sent across zone. Endpoints can be added or
+# removed based on requirements and zone availability.
+# GWLB VPC endpoint zone1 IP address.
+endpoints1: "10.104.3.100"
+endpoints1zone: us-west-2a
+
+# GWLB VPC endpoint zone2 IP address.
+endpoints2: "10.104.131.226"
+endpoints2zone: us-west-2b
+
+# PAN CNI image.
+cniimage: gcr.io/pan-cn-series/airs/pan-cni:4.0.0
+
+# Resource namespace name.
+namespace: kube-system
+
+# Kubernetes ClusterID value range 1-2048.
+clusterid: 1
