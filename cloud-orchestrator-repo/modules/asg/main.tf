@@ -44,7 +44,7 @@ locals {
 
 # Create launch template with a single interface
 resource "aws_launch_template" "this" {
-  name          = "${var.name_prefix}template-${var.unique_id}"
+  name          = "${var.name_prefix}template"
   ebs_optimized = true
   image_id      = coalesce(var.vmseries_ami_id, try(data.aws_ami.this[0].id, null))
   instance_type = var.instance_type
@@ -80,7 +80,7 @@ resource "aws_launch_template" "this" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "${var.name_prefix}vmseries"
+      Name = "${var.name_prefix}${var.instance_name_suffix}"
     }
   }
 
@@ -92,7 +92,7 @@ resource "aws_launch_template" "this" {
 
 # Create autoscaling group based on launch template and ALL subnets from var.interfaces
 resource "aws_autoscaling_group" "this" {
-  name                = "${var.name_prefix}${var.asg_name}-${var.unique_id}"
+  name                = "${var.name_prefix}${var.asg_name}"
   vpc_zone_identifier = distinct([for k, v in local.default_eni_subnet_names[0] : v])
   desired_capacity    = var.desired_capacity
   max_size            = var.max_size
@@ -171,7 +171,7 @@ data "aws_partition" "this" {}
 
 # IAM role that will be used for Lambda function
 resource "aws_iam_role" "this" {
-  name               = "${var.name_prefix}lambda_iam_role-${var.unique_id}"
+  name               = "${var.name_prefix}lambda_iam_role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -293,7 +293,7 @@ data "archive_file" "this" {
 
 resource "aws_lambda_function" "this" {
   filename                       = data.archive_file.this.output_path
-  function_name                  = "${var.name_prefix}asg_actions-${var.unique_id}"
+  function_name                  = "${var.name_prefix}asg_actions"
   role                           = aws_iam_role.this.arn
   handler                        = "lambda.lambda_handler"
   source_code_hash               = data.archive_file.this.output_base64sha256
@@ -328,7 +328,7 @@ resource "aws_lambda_permission" "this" {
 }
 
 resource "aws_cloudwatch_event_rule" "instance_launch_event_rule" {
-  name          = "${var.name_prefix}asg_launch-${var.unique_id}"
+  name          = "${var.name_prefix}asg_launch"
   tags          = var.global_tags
   event_pattern = <<EOF
 {
@@ -340,7 +340,7 @@ resource "aws_cloudwatch_event_rule" "instance_launch_event_rule" {
   ],
   "detail": {
     "AutoScalingGroupName": [
-      "${var.name_prefix}${var.asg_name}-${var.unique_id}"
+      "${var.name_prefix}${var.asg_name}"
     ]
   }
 }
@@ -348,7 +348,7 @@ EOF
 }
 
 resource "aws_cloudwatch_event_rule" "instance_terminate_event_rule" {
-  name          = "${var.name_prefix}asg_terminate-${var.unique_id}"
+  name          = "${var.name_prefix}asg_terminate"
   tags          = var.global_tags
   event_pattern = <<EOF
 {
@@ -360,7 +360,7 @@ resource "aws_cloudwatch_event_rule" "instance_terminate_event_rule" {
   ],
   "detail": {
     "AutoScalingGroupName": [
-      "${var.name_prefix}${var.asg_name}-${var.unique_id}"
+      "${var.name_prefix}${var.asg_name}"
     ]
   }
 }
@@ -381,7 +381,7 @@ resource "aws_cloudwatch_event_target" "instance_terminate_event" {
 
 resource "aws_autoscalingplans_scaling_plan" "this" {
   count = var.scaling_plan_enabled ? 1 : 0
-  name  = "${var.name_prefix}scaling-plan-${var.unique_id}"
+  name  = "${var.name_prefix}scaling-plan"
   application_source {
     dynamic "tag_filter" {
       for_each = var.scaling_tags
