@@ -486,3 +486,5 @@ module "vmseries" {
   ssh_key_name         = var.ssh_key_name
   tags                 = var.global_tags
 }
+
+
