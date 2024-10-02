@@ -152,10 +152,11 @@ module "eks_al2023" {
   subnet_ids = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id] ##TODO fix this
 
   eks_managed_node_group_defaults = {
-    enable_bootstrap_user_data = true
-    ami_type                   = "AL2_x86_64"
-    pre_bootstrap_user_data    = <<-EOT
-
+    # enable_bootstrap_user_data = true
+    ami_type                = "AL2_x86_64"
+    pre_bootstrap_user_data = <<-EOT
+#!/bin/bash
+set -e
 # Root CA
 cat <<EOF > /tmp/root-ca.crt
 -----BEGIN CERTIFICATE-----
