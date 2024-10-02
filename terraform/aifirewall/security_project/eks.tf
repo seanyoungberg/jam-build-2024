@@ -114,7 +114,7 @@ resource "aws_vpc_endpoint" "ec2" {
 
 module "eks_al2023" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
+  version = "v20.24.2"
 
   cluster_name                   = "${var.name_prefix}K8s"
   cluster_version                = "1.31"
