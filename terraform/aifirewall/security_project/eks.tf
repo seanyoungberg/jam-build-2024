@@ -147,11 +147,11 @@ module "eks_al2023" {
     }
     codebuild = {
       kubernetes_groups = []
-      principal_arn     = "arn:aws:iam::367521625516:role/sso_admin"
+      principal_arn     = data.aws_iam_session_context.current.issuer_arn
 
       policy_associations = {
         example = {
-          policy_arn = data.aws_iam_session_context.current.issuer_arn
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
             type = "cluster"
           }
