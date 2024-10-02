@@ -19,22 +19,22 @@ variable "unique_id" {
 
 variable "customer_role_name" {
   type = string
-  default = "syoungberg-367521625516"
+  default = ""
 }
 
 variable "palo_alto_networks_trusted_entity_role_arn" {
   type = string
-  default = "arn:aws:iam::654654158677:role/gcp_assume_role"
+  default = ""
 }
 
 variable "palo_alto_networks_trusted_entity_role_session_name" {
   type = string
-  default = "panw_discovery_1120118569"
+  default = ""
 }
 
 variable "customer_aws_s3_logs_bucket" {
   type = string
-  default = "367521625516-airs-logs"
+  default = ""
 }
 
 # variable "tsg_id" {
