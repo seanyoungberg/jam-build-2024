@@ -29,7 +29,7 @@ resource "aws_flow_log" "vpc_flow_logs" {
   tags = merge(
     var.global_tags,
     {
-      Name = "${var.name_prefix}-FlowLog-${each.key}"
+      Name = "${var.name_prefix}FlowLog-${each.key}"
     }
   )
 }
