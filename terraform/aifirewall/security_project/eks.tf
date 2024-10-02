@@ -112,6 +112,13 @@ resource "aws_vpc_endpoint" "ec2" {
 # EKS Cluster
 ##################################################################
 
+# Get codebuild caller identity to add to EKS IAM Access Entry for later kubectl provider
+data "aws_caller_identity" "current" {}
+data "aws_iam_session_context" "current" {
+  arn = data.aws_caller_identity.current.arn
+}
+
+
 module "eks_al2023" {
   source  = "terraform-aws-modules/eks/aws"
   version = "v20.24.2"
@@ -128,6 +135,19 @@ module "eks_al2023" {
     example = {
       kubernetes_groups = []
       principal_arn     = "arn:aws:iam::367521625516:role/sso_admin"
+
+      policy_associations = {
+        example = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    codebuild = {
+      kubernetes_groups = []
+      principal_arn     = data.aws_iam_session_context.current.issuer_arn
 
       policy_associations = {
         example = {
