@@ -116,8 +116,8 @@ module "eks_al2023" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "${var.name_prefix}K8s"
-  cluster_version = "1.31"
+  cluster_name                   = "${var.name_prefix}K8s"
+  cluster_version                = "1.31"
   cluster_endpoint_public_access = true
 
   #enable_cluster_creator_admin_permissions = true
@@ -133,7 +133,7 @@ module "eks_al2023" {
         example = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
-            type       = "cluster"
+            type = "cluster"
           }
         }
       }
@@ -151,27 +151,10 @@ module "eks_al2023" {
   vpc_id     = module.vpc["app1_vpc"].id
   subnet_ids = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id] ##TODO fix this
 
-  eks_managed_node_groups = {
-    managed_node_group_1 = {
-      # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
-      name                                   = "${var.name_prefix}K8s-node"
-      ami_type                               = "AL2023_x86_64_STANDARD"
-      instance_types                         = ["m6i.large"]
-      key_name                               = var.ssh_key_name
-      iam_role_use_name_prefix               = true
-      cluster_security_group_use_name_prefix = true
-      iam_role_additional_policies           = { SSM = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" }
-      iam_role_tags                          = var.global_tags
-
-      min_size = 2
-      max_size = 2
-      # This value is ignored after the initial creation
-      # https://github.com/bryantbiggs/eks-desired-size-hack
-      desired_size = 2
-
-      #pre_bootstrap_user_data = file("${path.module}/add_ca.sh")
-      pre_bootstrap_user_data = <<-EOT
-#!/bin/bash
+  eks_managed_node_group_defaults = {
+    enable_bootstrap_user_data = true
+    ami_type                   = "AL2_x86_64"
+    pre_bootstrap_user_data    = <<-EOT
 
 # Root CA
 cat <<EOF > /tmp/root-ca.crt
@@ -311,6 +294,29 @@ update-ca-trust extract
 # Clean up
 rm /tmp/*.crt
 EOT
+
+  }
+  eks_managed_node_groups = {
+    managed_node_group_1 = {
+      # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
+      name = "${var.name_prefix}K8s-node"
+      # ami_type                               = "AL2023_x86_64_STANDARD"
+      # instance_types                         = ["m6i.large"]
+      instance_types                         = ["t3.small"]
+      key_name                               = var.ssh_key_name
+      iam_role_use_name_prefix               = true
+      cluster_security_group_use_name_prefix = true
+      iam_role_additional_policies           = { SSM = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" }
+      iam_role_tags                          = var.global_tags
+
+      min_size = 1
+      max_size = 3
+      # This value is ignored after the initial creation
+      # https://github.com/bryantbiggs/eks-desired-size-hack
+      desired_size = 2
+
+      #pre_bootstrap_user_data = file("${path.module}/add_ca.sh")
+
 
       # This is not required - demonstrates how to pass additional configuration to nodeadm
       # Ref https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/     
