@@ -90,6 +90,24 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-logs-endpoint" })
 }
 
+resource "aws_vpc_endpoint" "sts" {
+  vpc_id             = module.vpc["app1_vpc"].id
+  service_name       = "com.amazonaws.${var.region}.sts"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
+  tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-sts-endpoint" })
+}
+
+resource "aws_vpc_endpoint" "ec2" {
+  vpc_id             = module.vpc["app1_vpc"].id
+  service_name       = "com.amazonaws.${var.region}.ec2"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
+  tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-ec2-endpoint" })
+}
+
 ##################################################################
 # EKS Cluster
 ##################################################################
@@ -151,9 +169,152 @@ module "eks_al2023" {
       # https://github.com/bryantbiggs/eks-desired-size-hack
       desired_size = 2
 
+      #pre_bootstrap_user_data = file("${path.module}/add_ca.sh")
+      pre_bootstrap_user_data = <<-EOT
+#!/bin/bash
+
+# Root CA
+cat <<EOF > /tmp/root-ca.crt
+-----BEGIN CERTIFICATE-----
+MIIDGjCCAgKgAwIBAgIJAOAssb/vAU5uMA0GCSqGSIb3DQEBCwUAMD0xOzA5BgNV
+BAMTMlBhbG8gQWx0byBOZXR3b3JrcyAtIFByb2Zlc3Npb25hbCBTZXJ2aWNlcyBS
+b290IENBMB4XDTI0MDcyNDA3NTQwN1oXDTI2MDcyNDA3NTQwN1owPTE7MDkGA1UE
+AxMyUGFsbyBBbHRvIE5ldHdvcmtzIC0gUHJvZmVzc2lvbmFsIFNlcnZpY2VzIFJv
+b3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDHa/VpQeOkKnxG
+VoSI4rD8lCWQw19kHPIcs4dGQbyhIy17vVGYM2t6EWYlSiJxOHh/ybtXoPdPd/QJ
+EkUGRnLILa9cWFn7hjY6h1G7lGhA4SlaPPXETJ22QHIo3buVhzonwAqf/62LAMlP
+S1KlkEWD8Hgx87TENB0MRvThqieVCT/tQXBF1aIoqE8DmIuifYUg3hp6nAnuF7hV
+jaWLf6moP3gwP4n0RlEopnnyuNI/ICmNnGmrKnHYYJ2rOJlkRppp6z1jLLtTH8o8
+MjFzShoVcWnaP8ME3/MOSKD4a2JOquqi8sd3OmNDhwj3mYWjXRKn502j4LGQNyPU
+ZM3geD1tAgMBAAGjHTAbMAwGA1UdEwQFMAMBAf8wCwYDVR0PBAQDAgIEMA0GCSqG
+SIb3DQEBCwUAA4IBAQAIgyxijj3wYMuvvI2IcyZANY+HCT7dihAJUwDSbH/SjhGb
+GF4F0x/7DN4Gm/4Xfs4S/tcd2l3KAO+MOdc2HLA9LUxdVzinUdl29iUvphtzi1+N
+MZ1NDd333oRjxwQaYZaTApXrz2N07Iqc44baob6Cxd8ba1K8s5tJP8kAFdHXzZJN
+IEZvWVP6caHWO90xebJSCtKFIox8J1WfCc/EzoGXVUDw0pj9EmQao5UfjTy7Fp1W
+rJYc+5k7a43YzRkXB8wG5+Mh17Zg/sxQzxifLA42vgITTzwelLHVHG7JxcdOvjTr
+Pf286DbyrucUJefaVPN039H5+oGhlFkgYOBihdGG
+-----END CERTIFICATE-----
+EOF
+
+# Forward Trust CA
+cat <<EOF > /tmp/forward-trust.crt
+-----BEGIN CERTIFICATE-----
+MIIDHzCCAgegAwIBAgIFAK86Xh4wDQYJKoZIhvcNAQELBQAwPTE7MDkGA1UEAxMy
+UGFsbyBBbHRvIE5ldHdvcmtzIC0gUHJvZmVzc2lvbmFsIFNlcnZpY2VzIFJvb3Qg
+Q0EwHhcNMjQwNzI0MDc1NDA4WhcNMjYwNzI0MDc1NDA4WjBGMUQwQgYDVQQDEztQ
+YWxvIEFsdG8gTmV0d29ya3MgLSBQcm9mZXNzaW9uYWwgU2VydmljZXMgRm9yd2Fy
+ZCBUcnVzdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOfCSWc9
+lA2YIh1IVq5UmQn46dpXM61nvw3B4blCDXg/dfm9qYMGth3SlWyeGJAAbibogMtE
++HRV9Tpg6vlC2SuvGAhYGSpknJLFe8TvLA6yR8VsYz0O4v61AwFo3zypjE5Rcj9H
+TvC28urHWhVm19ELMok12czQP3wLHHOw75iOhSRh5ofu6kN3MII/e98e5UrlRCiW
+CxzGBX4k+In/zk42nRoJEOmFUoy2Up+PpdTbaTmvshaWtkOOneAjktEuefF20Q76
+fuL1KzbtQcAsa4XK1rDMUV5G5m6zpldd7Ul+wrBrU+dxEOAkg8V1KIi83jHdLaod
+rRAW5Hyv+5aRFP8CAwEAAaMdMBswDAYDVR0TBAUwAwEB/zALBgNVHQ8EBAMCAgQw
+DQYJKoZIhvcNAQELBQADggEBAD1CwUMiKS0PdWDmWy3WS1zj5KQ5HVQm7YoUeNGu
+bLU/dPAlL7jpH7vH78E65QRLlpPsQ+G9uLV/fMKepoBcfv9jLuDAxf09R92fsN48
+hrxdtSS54eGXZ5ZjTI0GryPfEDzlqxwwDHfzu2DDoGKNFIsGGPB5ctR5bS9J+az1
+Z/lVf9k0zqWLf4fUFC9YgjUbUVfVQ8uXWlo1IlUaKrpIWaQpx5+5czgEDYeAQCTG
+ELAyKzh+ZXi5zuV+xi21ZjI86QZKOuvz2cC3tAWkT2litn8+PbmqfPlUlQlJAaGK
+SG4LH8EtivrRGXDTIfvU76dPcpIL0a2CymPBWwkA0xvHNIY=
+-----END CERTIFICATE-----
+EOF
+
+# Forward Trust CA
+cat <<EOF > /tmp/forward-trust.crt
+-----BEGIN CERTIFICATE-----
+MIIDHzCCAgegAwIBAgIFAK86Xh4wDQYJKoZIhvcNAQELBQAwPTE7MDkGA1UEAxMy
+UGFsbyBBbHRvIE5ldHdvcmtzIC0gUHJvZmVzc2lvbmFsIFNlcnZpY2VzIFJvb3Qg
+Q0EwHhcNMjQwNzI0MDc1NDA4WhcNMjYwNzI0MDc1NDA4WjBGMUQwQgYDVQQDEztQ
+YWxvIEFsdG8gTmV0d29ya3MgLSBQcm9mZXNzaW9uYWwgU2VydmljZXMgRm9yd2Fy
+ZCBUcnVzdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOfCSWc9
+lA2YIh1IVq5UmQn46dpXM61nvw3B4blCDXg/dfm9qYMGth3SlWyeGJAAbibogMtE
++HRV9Tpg6vlC2SuvGAhYGSpknJLFe8TvLA6yR8VsYz0O4v61AwFo3zypjE5Rcj9H
+TvC28urHWhVm19ELMok12czQP3wLHHOw75iOhSRh5ofu6kN3MII/e98e5UrlRCiW
+CxzGBX4k+In/zk42nRoJEOmFUoy2Up+PpdTbaTmvshaWtkOOneAjktEuefF20Q76
+fuL1KzbtQcAsa4XK1rDMUV5G5m6zpldd7Ul+wrBrU+dxEOAkg8V1KIi83jHdLaod
+rRAW5Hyv+5aRFP8CAwEAAaMdMBswDAYDVR0TBAUwAwEB/zALBgNVHQ8EBAMCAgQw
+DQYJKoZIhvcNAQELBQADggEBAD1CwUMiKS0PdWDmWy3WS1zj5KQ5HVQm7YoUeNGu
+bLU/dPAlL7jpH7vH78E65QRLlpPsQ+G9uLV/fMKepoBcfv9jLuDAxf09R92fsN48
+hrxdtSS54eGXZ5ZjTI0GryPfEDzlqxwwDHfzu2DDoGKNFIsGGPB5ctR5bS9J+az1
+Z/lVf9k0zqWLf4fUFC9YgjUbUVfVQ8uXWlo1IlUaKrpIWaQpx5+5czgEDYeAQCTG
+ELAyKzh+ZXi5zuV+xi21ZjI86QZKOuvz2cC3tAWkT2litn8+PbmqfPlUlQlJAaGK
+SG4LH8EtivrRGXDTIfvU76dPcpIL0a2CymPBWwkA0xvHNIY=
+-----END CERTIFICATE-----
+EOF
+
+# Forward Untrust CA
+cat <<EOF > /tmp/forward-untrust.crt
+-----BEGIN CERTIFICATE-----
+MIIDITCCAgmgAwIBAgIFAK86Xh8wDQYJKoZIhvcNAQELBQAwPTE7MDkGA1UEAxMy
+UGFsbyBBbHRvIE5ldHdvcmtzIC0gUHJvZmVzc2lvbmFsIFNlcnZpY2VzIFJvb3Qg
+Q0EwHhcNMjQwNzI0MDc1NDA5WhcNMjYwNzI0MDc1NDA5WjBIMUYwRAYDVQQDEz1Q
+YWxvIEFsdG8gTmV0d29ya3MgLSBQcm9mZXNzaW9uYWwgU2VydmljZXMgRm9yd2Fy
+ZCBVblRydXN0IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3WhF
+RMqT3Cb6rSVEmqVWXOgm2ACsX4dEIl2wcBrMig3jSLAdSu6CGya6JHbmjXJFbkuI
+trXh1IKM6ok59NcZmz66yIYewlp/NqYn+uvgVbI/fod/qmpvaMmcxCJIwGMdApY4
+9/nPFE8WgMTtgHA8hcFZT3+WxmbkgQ52DpIIVlLrzxjTi+YQ8ez90W6GRtJfHljm
+vjCtjvxe9+Ji6xyG6Kd3x8bWmgewBiOnTdbvSsbdNyniOUfCPnczCFSfr+uT/MT6
+QIevjrEjdhkTNk5n1tZtM9kMfDLoMFoP657e0MewD+xogwmrXrmSQBK8ehnnHGyY
+uJjlyadCfq76ThDRiQIDAQABox0wGzAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIC
+BDANBgkqhkiG9w0BAQsFAAOCAQEAKzPFa7RbmZLCwkMGXVfnh7FtIYqUxW9XNNvv
+lY8ZS+ZvB1CdaaAd94fKiy9+ZAdrAa3/iqn095GARcoJm9e7pdOpyxjAO/3JFi+v
+lSn8hwSGxDi90W8Sk4hv7KSDnExta6/u5AQqRxxo+SMPAlgSFNnKVh0RwR4z8OlW
+tGG9I8JkGKZ4jMP5fTlZ1jVjomFS4A9Ry4IJG3Hh5ahQdAAaVTA5w9flqrPjAvBV
+Sw76it2H0fcbI6FjUm0wzs+lOcrezm+oQ9xUPaae4WUFM7ckONm16uhEhU6Tde+F
++OjMoFgyF7ev9y06iSxciIArddrCt/NhmLMLPR7TtpeKoSkAKA==
+-----END CERTIFICATE-----
+EOF
+
+# Forward Trust CA ECDSA
+cat <<EOF > /tmp/forward-trust-ecdsa.crt
+-----BEGIN CERTIFICATE-----
+MIICTjCCATagAwIBAgIFAK86XiAwDQYJKoZIhvcNAQELBQAwPTE7MDkGA1UEAxMy
+UGFsbyBBbHRvIE5ldHdvcmtzIC0gUHJvZmVzc2lvbmFsIFNlcnZpY2VzIFJvb3Qg
+Q0EwHhcNMjQwNzI2MTU1NjI4WhcNMjYwNzI2MTU1NjI4WjBAMT4wPAYDVQQDEzVQ
+YWxvIEFsdG8gTmV0d29ya3MgLSBQcm9mZXNzaW8gRm9yd2FyZCBUcnVzdCBDQSBF
+Q0RTQTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNY50W+eGgWpi095vOB04aCI
+B6/4hpCKRIg+qPUqb4z3BsRiDJOidHWJuvI7xmVH1vpm2QB3AoWU3EdX4ofvwf+j
+HTAbMAwGA1UdEwQFMAMBAf8wCwYDVR0PBAQDAgIEMA0GCSqGSIb3DQEBCwUAA4IB
+AQAWYCruDPP+3Rb4V29gMSmK5Z1RqBKtJFU2LtVNK20jJgiVe09BI8OtDQwCZ976
+KoOS0NVum0y7x5xJADGhlY92vNxRVUxzQouHn33da/Fh1HkUbZ9an/3Vwhbz8Mr7
+Nsm9lMZ3BaXkEp6n6N42OwiI63WQX3qtYO9mGkFODw7s8xLDl9lKvOjc1sJjVKM5
+WJfjzRBnxdRw5a0CQJsTGuRoPckPZI5lQZqJTlwkcNjfmpW+dgXx+RxDrLgtdzVa
+iDNmw4fMYHbD3scDLNDTmWuYEFbt0g+tseP9UtLkF6LZqxouhpLq5WxThe1hq/+0
+DHbV9slSjUfg6CNtsJLHFK/N
+-----END CERTIFICATE-----
+EOF
+
+# Forward Unrust CA ECDSA
+cat <<EOF > /tmp/forward-untrust-ecdsa.crt
+-----BEGIN CERTIFICATE-----
+MIICUDCCATigAwIBAgIFAK86XiEwDQYJKoZIhvcNAQELBQAwPTE7MDkGA1UEAxMy
+UGFsbyBBbHRvIE5ldHdvcmtzIC0gUHJvZmVzc2lvbmFsIFNlcnZpY2VzIFJvb3Qg
+Q0EwHhcNMjQwNzI2MTU1NjI4WhcNMjYwNzI2MTU1NjI4WjBCMUAwPgYDVQQDEzdQ
+YWxvIEFsdG8gTmV0d29ya3MgLSBQcm9mZXNzaW8gRm9yd2FyZCBVblRydXN0IENB
+IEVDRFNBMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEy2AnZKqq8cdcSyLK712z
+KLYJnOPC5olmRQde6BjGsg0KKCnOG+zztPYLy8+1DJsVu2RiHjSmFS+4A/JLul8X
+zKMdMBswDAYDVR0TBAUwAwEB/zALBgNVHQ8EBAMCAgQwDQYJKoZIhvcNAQELBQAD
+ggEBAFh/VAXmuJ8xKikIw+pGxxw+lvTW/Cn/Fe3wzCuLcIpEYNJeAGANK7d8qw+O
+E13/h2jfl6jZn4aLe3Kp+xRyfxzzlAPYHqW5XUiWq7LZ8jZaok+tn6JrLMwCSfYU
+2leLPhCIgZkZQ9fjYYzCk6RQZWhK0qemaOwN9uZKJYhvmxhpEY+4hkB1f/S4hJFD
+pUngF8u1fcqV+OmNGkMGtOs6bbpuoaEzoScUKktrtuLh8nPLVJz6/QdJS7cXCAUv
+G5aMi+cBocbP3JvxHyoKLST4b2eSS8A8AvM1HXNvuwuV/r74jG2OD9MuP4u+8cql
+tMoF9UirnnGEQgnng37TDUOUtYk=
+-----END CERTIFICATE-----
+EOF
+
+
+# Add all certificates to the trust store
+cp /tmp/*.crt /etc/pki/ca-trust/source/anchors/
+update-ca-trust extract
+
+# Clean up
+rm /tmp/*.crt
+EOT
+
       # This is not required - demonstrates how to pass additional configuration to nodeadm
-      # Ref https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/
-      cloudinit_pre_nodeadm = []
+      # Ref https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/     
+      #cloudinit_pre_nodeadm = []
     }
   }
 
