@@ -14,7 +14,7 @@ ssh_key_name = "rimu-keypair-sydney" # REPLACE-WITH Keypair created
 vpcs = {
   # Do not use `-` in key for VPC as this character is used in concatation of VPC and subnet for module `subnet_set` in `main.tf`
   security_vpc = {
-    name  = "security-vpc"
+    name  = "security-vpc"y
     cidr  = "10.100.0.0/16"
     nacls = {}
     security_groups = {
