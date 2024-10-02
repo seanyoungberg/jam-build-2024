@@ -2,7 +2,7 @@
 variable "region" {
   description = "AWS region used to deploy whole infrastructure"
   type        = string
-  default     = "us-west-2"
+  default     = "us-east-1"
 }
 
 # variable "s3_bucket" {
