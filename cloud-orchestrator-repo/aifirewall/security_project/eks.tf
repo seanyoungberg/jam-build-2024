@@ -100,6 +100,7 @@ module "eks_al2023" {
 
   cluster_name    = "${var.name_prefix}K8s"
   cluster_version = "1.31"
+  cluster_endpoint_public_access = true
 
   # EKS Addons
   cluster_addons = {
