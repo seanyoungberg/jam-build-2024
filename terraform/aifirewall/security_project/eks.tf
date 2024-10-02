@@ -153,78 +153,7 @@ module "eks_al2023" {
 
       # This is not required - demonstrates how to pass additional configuration to nodeadm
       # Ref https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/
-      cloudinit_pre_nodeadm = [
-        {
-          content_type = "application/node.eks.aws"
-          content      = <<-EOT
-            ---
-            apiVersion: v1
-            kind: Service
-            metadata:
-              name: ui-service
-            spec:
-              type: LoadBalancer
-              ports:
-                - port: 8080
-                  targetPort: 3000
-              selector:
-                app: ui
-            ---
-            apiVersion: apps/v1
-            kind: Deployment
-            metadata:
-              name: ui-deployment
-            spec:
-              replicas: 1
-              selector:
-                matchLabels:
-                  app: ui
-              template:
-                metadata:
-                  labels:
-                    app: ui
-                spec:
-                  containers:
-                    - name: ui
-                      image: migara/ui-app
-                      ports:
-                        - containerPort: 3000
-            ---
-            apiVersion: v1
-            kind: Service
-            metadata:
-              name: agent-service
-            spec:
-              type: ClusterIP
-              ports:
-                - port: 3001
-                  targetPort: 3001
-              selector:
-                app: agent
-            ---
-            apiVersion: apps/v1
-            kind: Deployment
-            metadata:
-              name: agent-deployment
-            spec:
-              replicas: 1
-              selector:
-                matchLabels:
-                  app: agent
-              template:
-                metadata:
-                  labels:
-                    app: agent
-                spec:
-                  containers:
-                    - name: agent
-                      image: migara/agent-app
-                      ports:
-                        - containerPort: 3001
-
-          EOT
-        }
-      ]
+      cloudinit_pre_nodeadm = []
     }
   }
 
