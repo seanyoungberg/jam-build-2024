@@ -5,15 +5,16 @@ variable "region" {
 variable "name_prefix" {
   description = "Prefix used in names for the resources (VPCs, EC2 instances, autoscaling groups etc.)"
   type        = string
-  default = ""
+  default     = ""
 }
 variable "global_tags" {
   description = "Global tags configured for all provisioned resources"
-  default = {}
+  default     = {}
 }
 variable "ssh_key_name" {
   description = "Name of the SSH key pair existing in AWS key pairs and used to authenticate to VM-Series or test boxes"
   type        = string
+  default     = ""
 }
 
 variable "unique_id" {

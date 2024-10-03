@@ -12,10 +12,10 @@ terraform {
     }
   }
   backend "s3" {
-    encrypt        = true
+    encrypt = true
   }
 }
 
 provider "aws" {
-  region  = var.region
+  region = var.region
 }
