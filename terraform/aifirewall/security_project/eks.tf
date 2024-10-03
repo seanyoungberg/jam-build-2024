@@ -359,6 +359,7 @@ EOT
       # This is not required - demonstrates how to pass additional configuration to nodeadm
       # Ref https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/     
       #cloudinit_pre_nodeadm = []
+      launch_template_tags = var.global_tags
     }
   }
 
