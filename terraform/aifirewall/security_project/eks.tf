@@ -51,6 +51,7 @@ resource "aws_vpc_endpoint" "eks" {
   vpc_id             = module.vpc["app1_vpc"].id
   service_name       = "com.amazonaws.${var.region}.eks"
   vpc_endpoint_type  = "Interface"
+  private_dns_enabled = true
   subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-eks-endpoint" })
@@ -60,6 +61,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   vpc_id             = module.vpc["app1_vpc"].id
   service_name       = "com.amazonaws.${var.region}.ecr.api"
   vpc_endpoint_type  = "Interface"
+  private_dns_enabled = true
   subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-ecr-endpoint" })
@@ -69,6 +71,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   vpc_id             = module.vpc["app1_vpc"].id
   service_name       = "com.amazonaws.${var.region}.ecr.dkr"
   vpc_endpoint_type  = "Interface"
+  private_dns_enabled = true
   subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-dkr-endpoint" })
@@ -85,6 +88,7 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
   vpc_id             = module.vpc["app1_vpc"].id
   service_name       = "com.amazonaws.${var.region}.logs"
   vpc_endpoint_type  = "Interface"
+  private_dns_enabled = true
   subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-logs-endpoint" })
@@ -94,6 +98,7 @@ resource "aws_vpc_endpoint" "sts" {
   vpc_id             = module.vpc["app1_vpc"].id
   service_name       = "com.amazonaws.${var.region}.sts"
   vpc_endpoint_type  = "Interface"
+  private_dns_enabled = true
   subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-sts-endpoint" })
@@ -103,6 +108,7 @@ resource "aws_vpc_endpoint" "ec2" {
   vpc_id             = module.vpc["app1_vpc"].id
   service_name       = "com.amazonaws.${var.region}.ec2"
   vpc_endpoint_type  = "Interface"
+  private_dns_enabled = true
   subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-ec2-endpoint" })
@@ -118,6 +124,12 @@ data "aws_iam_session_context" "current" {
   arn = data.aws_caller_identity.current.arn
 }
 
+# Workaround to identify if execution is running in cloudbuild to decide which IAM Access entries to set on EKS
+locals {
+  is_codebuild  = length(regexall("^codebuild-.*", basename(path.cwd))) > 0
+}
+
+
 
 module "eks_al2023" {
   source  = "terraform-aws-modules/eks/aws"
@@ -130,35 +142,40 @@ module "eks_al2023" {
   #enable_cluster_creator_admin_permissions = true
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  access_entries = {
-    # One access entry with a policy associated
-    example = {
-      kubernetes_groups = []
-      principal_arn     = "arn:aws:iam::367521625516:role/sso_admin"
+  access_entries = merge(
+    {
+      # Static access entry for SSO admin
+      sso_admin = {
+        kubernetes_groups = []
+        principal_arn     = var.user_iam_role_for_eks
 
-      policy_associations = {
-        example = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
+        policy_associations = {
+          admin_policy = {
+            policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+            access_scope = {
+              type = "cluster"
+            }
           }
         }
       }
-    }
-    codebuild = {
-      kubernetes_groups = []
-      principal_arn     = data.aws_iam_session_context.current.issuer_arn
+    },
+    # Conditional access entry for CodeBuild
+    local.is_codebuild ? {
+      codebuild = {
+        kubernetes_groups = []
+        principal_arn     = data.aws_iam_session_context.current.issuer_arn
 
-      policy_associations = {
-        example = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
+        policy_associations = {
+          admin_policy = {
+            policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+            access_scope = {
+              type = "cluster"
+            }
           }
         }
       }
-    }
-  }
+    } : {}
+  )
 
   # EKS Addons
   cluster_addons = {

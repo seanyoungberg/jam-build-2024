@@ -33,6 +33,12 @@ variable "ebs_kms_id" {
   default     = "alias/aws/ebs"
 }
 
+variable "user_iam_role_for_eks" {
+ description = "User Role to add to EKS Access Entry for K8s access"
+ type = string
+ default = "" 
+}
+
 ### VPC
 variable "vpcs" {
   description = <<-EOF
