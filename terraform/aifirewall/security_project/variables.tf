@@ -24,13 +24,19 @@ variable "unique_id" {
 variable "flow_log_bucket" {
   description = "Existing bucket to send VPC flow logs"
   type        = string
-  default     = "arn:aws:s3:::s3bucketflowlogs-375sokea"
+  default     = ""
 }
 
 variable "ebs_kms_id" {
   description = "Alias for AWS KMS used for EBS encryption. Defaults to AWS managed key"
   type        = string
   default     = "alias/aws/ebs"
+}
+
+variable "user_iam_role_for_eks" {
+ description = "User Role to add to EKS Access Entry for K8s access"
+ type = string
+ default = "" 
 }
 
 ### VPC
