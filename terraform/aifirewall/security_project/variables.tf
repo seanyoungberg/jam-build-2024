@@ -24,7 +24,7 @@ variable "unique_id" {
 variable "flow_log_bucket" {
   description = "Existing bucket to send VPC flow logs"
   type        = string
-  default     = "arn:aws:s3:::s3bucketflowlogs-375sokea"
+  default     = ""
 }
 
 variable "ebs_kms_id" {
