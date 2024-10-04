@@ -3,6 +3,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: migara-app
+  annotations:
+    paloaltonetworks.com/firewall: pan-fw
 ---
 apiVersion: v1
 kind: Service
