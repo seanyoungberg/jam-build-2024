@@ -291,28 +291,31 @@ resource "aws_instance" "spoke_vms" {
   }
 
   user_data = <<EOF
-Content-Type: multipart/mixed; boundary="//"
-MIME-Version: 1.0
-
---//
-Content-Type: text/cloud-config; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="cloud-config.txt"
-
-#cloud-config
-cloud_final_modules:
-- [scripts-user, always]
-
---//
-Content-Type: text/x-shellscript; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="userdata.txt"
-
 #!/bin/bash
-until yum update -y; do echo "Retrying"; sleep 5; done
-until yum install -y httpd; do echo "Retrying"; sleep 5; done
+
+# Function to retry commands
+retry_command() {
+    local max_attempts=500
+    local delay=60
+    local attempt=1
+    
+    until "$@" || [ $attempt -eq $max_attempts ]; do
+        echo "Command failed. Attempt $attempt/$max_attempts. Retrying in $delay seconds..."
+        sleep $delay
+        attempt=$((attempt + 1))
+    done
+    
+    if [ $attempt -eq $max_attempts ]; then
+        echo "Command failed after $max_attempts attempts."
+        return 1
+    fi
+}
+
+# Update and install packages
+retry_command yum update -y
+retry_command yum install -y httpd python3 python3-pip awscli
+
+# Configure Apache
 systemctl start httpd
 systemctl enable httpd
 usermod -a -G apache ec2-user
@@ -321,33 +324,21 @@ chmod 2775 /var/www
 find /var/www -type d -exec chmod 2775 {} \;
 find /var/www -type f -exec chmod 0664 {} \;
 
---//
-Content-Type: text/x-shellscript; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="custom_script.txt"
-
-#!/bin/bash
-# Update the system and install necessary packages
-yum update -y
-yum install -y python3 python3-pip awscli
-
-# Set up a directory for your scripts
+# Set up directory for scripts
 mkdir -p /opt/myscripts
 cd /opt/myscripts
 
-# Download the main script and Python scripts from S3
-aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/execute_scripts_aws.sh .
-aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama.py .
-aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama_threat.py .
-aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama3.py .
-aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama3_pj.py .
-
+# Download scripts from S3
+retry_command aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/execute_scripts_aws.sh .
+retry_command aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama.py .
+retry_command aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama_threat.py .
+retry_command aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama3.py .
+retry_command aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama3_pj.py .
 
 # Make the main script executable
 chmod +x execute_scripts_aws.sh
 
-# Set up a systemd service to run your script
+# Set up a systemd service
 cat <<EOT > /etc/systemd/system/myscript.service
 [Unit]
 Description=My Script Service
@@ -365,8 +356,6 @@ EOT
 # Enable and start the service
 systemctl enable myscript.service
 systemctl start myscript.service
-
---//--
 EOF
 }
 
