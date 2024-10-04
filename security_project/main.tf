@@ -1,7 +1,7 @@
 ### VPCS ###
 
 module "vpc" {
-  source = "../../modules/vpc"
+  source = "../modules/vpc"
 
   for_each = var.vpcs
 
@@ -38,7 +38,7 @@ resource "aws_flow_log" "vpc_flow_logs" {
 
 module "subnet_sets" {
   for_each = toset(flatten([for _, v in { for vk, vv in var.vpcs : vk => distinct([for sk, sv in vv.subnets : "${vk}-${sv.set}"]) } : v]))
-  source   = "../../modules/subnet_set"
+  source   = "../modules/subnet_set"
 
   name                = split("-", each.key)[1]
   name_prefix         = var.name_prefix
@@ -82,7 +82,7 @@ locals {
 
 module "vpc_routes" {
   for_each = { for route in local.vpc_routes : "${route.subnet_key}_${route.to_cidr}" => route }
-  source   = "../../modules/vpc_route"
+  source   = "../modules/vpc_route"
 
   route_table_ids = module.subnet_sets[each.value.subnet_key].unique_route_table_ids
   to_cidr         = each.value.to_cidr
@@ -92,7 +92,7 @@ module "vpc_routes" {
 ### NATGW ###
 
 module "natgw_set" {
-  source = "../../modules/nat_gateway_set"
+  source = "../modules/nat_gateway_set"
 
   for_each = var.natgws
 
@@ -103,7 +103,7 @@ module "natgw_set" {
 ### TGW ###
 
 module "transit_gateway" {
-  source = "../../modules/transit_gateway"
+  source = "../modules/transit_gateway"
 
   create       = var.tgw.create
   id           = var.tgw.id
@@ -116,7 +116,7 @@ module "transit_gateway" {
 ### TGW ATTACHMENTS ###
 
 module "transit_gateway_attachment" {
-  source = "../../modules/transit_gateway_attachment"
+  source = "../modules/transit_gateway_attachment"
 
   for_each = var.tgw.attachments
 
@@ -140,7 +140,7 @@ resource "aws_ec2_transit_gateway_route" "from_spokes_to_security" {
 ### GWLB ###
 
 module "gwlb" {
-  source = "../../modules/gwlb"
+  source = "../modules/gwlb"
 
   for_each = var.gwlbs
 
@@ -155,7 +155,7 @@ module "gwlb" {
 ### GWLB ENDPOINTS ###
 
 module "gwlbe_endpoint" {
-  source = "../../modules/gwlb_endpoint_set"
+  source = "../modules/gwlb_endpoint_set"
 
   for_each = var.gwlb_endpoints
 
@@ -269,7 +269,7 @@ resource "aws_instance" "spoke_vms" {
 ### SPOKE INBOUND NETWORK LOAD BALANCER ###
 
 module "app_lb" {
-  source = "../../modules/nlb"
+  source = "../modules/nlb"
 
   for_each = var.spoke_lbs
 
@@ -376,7 +376,7 @@ resource "aws_iam_instance_profile" "vm_series_iam_instance_profile" {
 ### AUTOSCALING GROUP WITH VM-Series INSTANCES ###
 
 module "vm_series_asg" {
-  source = "../../modules/asg"
+  source = "../modules/asg"
 
   for_each = var.vmseries_asgs
 
@@ -426,7 +426,7 @@ module "vm_series_asg" {
 ### BOOTSTRAP PACKAGE
 module "bootstrap" {
   for_each = { for vmseries in local.vmseries_instances : "${vmseries.group}-${vmseries.instance}" => vmseries }
-  source   = "../../modules/bootstrap"
+  source   = "../modules/bootstrap"
 
   iam_role_name             = "${var.name_prefix}tc_vm${each.value.instance}"
   iam_instance_profile_name = "${var.name_prefix}tc_vm_instance_profile${each.value.instance}"
@@ -446,7 +446,7 @@ locals {
 
 module "vmseries" {
   for_each = { for vmseries in local.vmseries_instances : "${vmseries.group}-${vmseries.instance}" => vmseries }
-  source   = "../../modules/vmseries"
+  source   = "../modules/vmseries"
 
   name                  = "${var.name_prefix}${each.key}"
   vmseries_version      = each.value.common.panos_version
