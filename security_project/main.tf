@@ -202,33 +202,71 @@ data "aws_kms_alias" "current_arn" {
   name = data.aws_ebs_default_kms_key.current.key_arn
 }
 
+# IAM Role
 resource "aws_iam_role" "spoke_vm_ec2_iam_role" {
-  name               = "${var.name_prefix}spoke_vm"
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": "sts:AssumeRole",
-            "Principal": {"Service": "ec2.amazonaws.com"}
-        }
-    ]
-}
-EOF
+  name = "${var.name_prefix}spoke_vm"
+  
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
 }
 
+# IAM Policy Document
+data "aws_iam_policy_document" "spoke_vm_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "cloudwatch:PutMetricData",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "bedrock:InvokeModel",
+      "bedrock:ListFoundationModels"
+    ]
+    resources = ["*"]
+  }
+}
+
+# IAM Policy
+resource "aws_iam_policy" "spoke_vm_policy" {
+  name        = "${var.name_prefix}spoke_vm_policy"
+  path        = "/"
+  description = "IAM policy for spoke VM EC2 instance"
+  policy      = data.aws_iam_policy_document.spoke_vm_policy.json
+}
+
+# Custom Policy Attachment
+resource "aws_iam_role_policy_attachment" "spoke_vm_policy_attach" {
+  role       = aws_iam_role.spoke_vm_ec2_iam_role.name
+  policy_arn = aws_iam_policy.spoke_vm_policy.arn
+}
+
+# AWS Managed Policy Attachment
 resource "aws_iam_role_policy_attachment" "spoke_vm_iam_instance_policy" {
   role       = aws_iam_role.spoke_vm_ec2_iam_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Instance Profile
 resource "aws_iam_instance_profile" "spoke_vm_iam_instance_profile" {
-
   name = "${var.name_prefix}spoke_vm_instance_profile"
   role = aws_iam_role.spoke_vm_ec2_iam_role.name
-
 }
+
 
 resource "aws_instance" "spoke_vms" {
   for_each = var.spoke_vms
@@ -253,17 +291,83 @@ resource "aws_instance" "spoke_vms" {
   }
 
   user_data = <<EOF
-  #!/bin/bash
-  until yum update -y; do echo "Retrying"; sleep 5; done
-  until yum install -y httpd; do echo "Retrying"; sleep 5; done
-  systemctl start httpd
-  systemctl enable httpd
-  usermod -a -G apache ec2-user
-  chown -R ec2-user:apache /var/www
-  chmod 2775 /var/www
-  find /var/www -type d -exec chmod 2775 {} \;
-  find /var/www -type f -exec chmod 0664 {} \;
-  EOF
+Content-Type: multipart/mixed; boundary="//"
+MIME-Version: 1.0
+
+--//
+Content-Type: text/cloud-config; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="cloud-config.txt"
+
+#cloud-config
+cloud_final_modules:
+- [scripts-user, always]
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="userdata.txt"
+
+#!/bin/bash
+until yum update -y; do echo "Retrying"; sleep 5; done
+until yum install -y httpd; do echo "Retrying"; sleep 5; done
+systemctl start httpd
+systemctl enable httpd
+usermod -a -G apache ec2-user
+chown -R ec2-user:apache /var/www
+chmod 2775 /var/www
+find /var/www -type d -exec chmod 2775 {} \;
+find /var/www -type f -exec chmod 0664 {} \;
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="custom_script.txt"
+
+#!/bin/bash
+# Update the system and install necessary packages
+yum update -y
+yum install -y python3 python3-pip awscli
+
+# Set up a directory for your scripts
+mkdir -p /opt/myscripts
+cd /opt/myscripts
+
+# Download the main script and Python scripts from S3
+aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/execute_scripts_aws.sh .
+aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama.py .
+aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama_threat.py .
+aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama3.py .
+aws s3 cp s3://aws-jam-challenge-resources-"${var.region}"/paloalto-ai-runtime-security/aws_bedrock_llama3_pj.py .
+
+
+# Make the main script executable
+chmod +x execute_scripts_aws.sh
+
+# Set up a systemd service to run your script
+cat <<EOT > /etc/systemd/system/myscript.service
+[Unit]
+Description=My Script Service
+After=network.target
+
+[Service]
+ExecStart=/opt/myscripts/execute_scripts_aws.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOT
+
+# Enable and start the service
+systemctl enable myscript.service
+systemctl start myscript.service
+
+--//--
+EOF
 }
 
 ### SPOKE INBOUND NETWORK LOAD BALANCER ###
