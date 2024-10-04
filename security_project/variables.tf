@@ -33,8 +33,14 @@ variable "ebs_kms_id" {
   default     = "alias/aws/ebs"
 }
 
-variable "user_iam_role_for_eks" {
- description = "User Role to add to EKS Access Entry for K8s access"
+variable "user_iam_role" {
+ description = "Existing role that lab user idenitity will use"
+ type = string
+ default = "" 
+}
+
+variable "codebuild_iam_role" {
+ description = "Existing role that codebuild will use"
  type = string
  default = "" 
 }

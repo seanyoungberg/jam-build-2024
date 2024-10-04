@@ -118,19 +118,6 @@ resource "aws_vpc_endpoint" "ec2" {
 # EKS Cluster
 ##################################################################
 
-# Get codebuild caller identity to add to EKS IAM Access Entry for later kubectl provider
-data "aws_caller_identity" "current" {}
-data "aws_iam_session_context" "current" {
-  arn = data.aws_caller_identity.current.arn
-}
-
-# Workaround to identify if execution is running in cloudbuild to decide which IAM Access entries to set on EKS
-locals {
-  is_codebuild  = length(regexall("^codebuild-.*", basename(path.cwd))) > 0
-}
-
-
-
 module "eks_al2023" {
   source  = "terraform-aws-modules/eks/aws"
   version = "v20.24.2"
@@ -142,40 +129,35 @@ module "eks_al2023" {
   #enable_cluster_creator_admin_permissions = true
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  access_entries = merge(
-    {
-      # Static access entry for SSO admin
-      sso_admin = {
-        kubernetes_groups = []
-        principal_arn     = var.user_iam_role_for_eks
+  access_entries = {
+    # One access entry with a policy associated
+    example = {
+      kubernetes_groups = []
+      principal_arn     = var.user_iam_role
 
-        policy_associations = {
-          admin_policy = {
-            policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-            access_scope = {
-              type = "cluster"
-            }
+      policy_associations = {
+        example = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
           }
         }
       }
-    },
-    # Conditional access entry for CodeBuild
-    local.is_codebuild ? {
-      codebuild = {
-        kubernetes_groups = []
-        principal_arn     = data.aws_iam_session_context.current.issuer_arn
+    }
+    codebuild = {
+      kubernetes_groups = []
+      principal_arn     = var.codebuild_iam_role
 
-        policy_associations = {
-          admin_policy = {
-            policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-            access_scope = {
-              type = "cluster"
-            }
+      policy_associations = {
+        example = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
           }
         }
       }
-    } : {}
-  )
+    }
+  }
 
   # EKS Addons
   cluster_addons = {
