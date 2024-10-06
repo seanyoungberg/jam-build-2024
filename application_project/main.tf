@@ -11,11 +11,11 @@ locals {
 
   # Read and template the file
   ai_app_prep = templatefile("${path.module}/k8s_manifests/ai_app_prep.yaml", {
-    root_ca = file("${path.module}/certs/Root-CA.pem.pem")
-    forward_trust_ca_ecdsa = file("${path.module}/certs/Forward-Trust-CA-ECDSA.pem")
-    forward_trust_ca = file("${path.module}/certs/Forward-Trust-CA.pem")
-    forward_untrust_ca_ecdsa = file("${path.module}/certs/Forward-UnTrust-CA-ECDSA.pem")
-    forward_untrust_ca = file("${path.module}/certs/Forward-UnTrust-CA.pem")
+    root_ca = file("${path.module}/ca/Root-CA.pem.pem")
+    forward_trust_ca_ecdsa = file("${path.module}/ca/Forward-Trust-CA-ECDSA.pem")
+    forward_trust_ca = file("${path.module}/ca/Forward-Trust-CA.pem")
+    forward_untrust_ca_ecdsa = file("${path.module}/ca/Forward-UnTrust-CA-ECDSA.pem")
+    forward_untrust_ca = file("${path.module}/ca/Forward-UnTrust-CA.pem")
   })
 
   # Read and template the file
