@@ -48,5 +48,5 @@ resource "kubectl_manifest" "ai_app" {
 resource "kubectl_manifest" "ai_app_netshoot" {
   for_each  = { for idx, doc in local.ai_app_netshoot_yaml : idx => doc if trimspace(doc) != "" }
   yaml_body = each.value
-  depends_on = [kubectl_manifest.ai_ca]
+  depends_on = [kubectl_manifest.ai_app_ca]
 }
