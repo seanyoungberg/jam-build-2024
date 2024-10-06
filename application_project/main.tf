@@ -10,15 +10,29 @@ locals {
   app1_lb_subnet_ids_string = join(",", data.aws_subnets.app_subnets.ids)
 
   # Read and template the file
-  templated_yaml = templatefile("${path.module}/k8s_manifests/deploy.yaml", {
+  ai_app = templatefile("${path.module}/k8s_manifests/ai_app.yaml", {
     lb_subnet_ids = local.app1_lb_subnet_ids_string
   })
 
   # Split the templated YAML into separate documents
-  yaml_documents = [for doc in split("---", local.templated_yaml) : trimspace(doc) if trimspace(doc) != ""]
+  ai_app_prep_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/ai_app_prep.yaml")) : trimspace(doc) if trimspace(doc) != ""]
+  ai_app_yaml = [for doc in split("---", local.ai_app) : trimspace(doc) if trimspace(doc) != ""]
+  ai_app_netshoot_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/netshoot_pod.yaml")) : trimspace(doc) if trimspace(doc) != ""]
 }
 
-resource "kubectl_manifest" "app_manifests" {
-  for_each  = { for idx, doc in local.yaml_documents : idx => doc if trimspace(doc) != "" }
+resource "kubectl_manifest" "ai_app_prep" {
+  for_each  = { for idx, doc in local.ai_app_prep_yaml : idx => doc if trimspace(doc) != "" }
   yaml_body = each.value
+}
+
+resource "kubectl_manifest" "ai_app" {
+  for_each  = { for idx, doc in local.ai_app_yaml : idx => doc if trimspace(doc) != "" }
+  yaml_body = each.value
+  depends_on = [kubectl_manifest.ai_app_prep]
+}
+
+resource "kubectl_manifest" "ai_app_netshoot" {
+  for_each  = { for idx, doc in local.ai_app_netshoot_yaml : idx => doc if trimspace(doc) != "" }
+  yaml_body = each.value
+  depends_on = [kubectl_manifest.ai_app]
 }
