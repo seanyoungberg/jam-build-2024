@@ -10,12 +10,21 @@ locals {
   app1_lb_subnet_ids_string = join(",", data.aws_subnets.app_subnets.ids)
 
   # Read and template the file
+  ai_app_prep = templatefile("${path.module}/k8s_manifests/ai_app_prep.yaml", {
+    root_ca = file("${path.module}/certs/Root-CA.pem.pem")
+    forward_trust_ca_ecdsa = file("${path.module}/certs/Forward-Trust-CA-ECDSA.pem")
+    forward_trust_ca = file("${path.module}/certs/Forward-Trust-CA.pem")
+    forward_untrust_ca_ecdsa = file("${path.module}/certs/Forward-UnTrust-CA-ECDSA.pem")
+    forward_untrust_ca = file("${path.module}/certs/Forward-UnTrust-CA.pem")
+  })
+
+  # Read and template the file
   ai_app = templatefile("${path.module}/k8s_manifests/ai_app.yaml", {
     lb_subnet_ids = local.app1_lb_subnet_ids_string
   })
 
   # Split the templated YAML into separate documents
-  ai_app_prep_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/ai_app_prep.yaml")) : trimspace(doc) if trimspace(doc) != ""]
+  ai_app_prep_yaml = [for doc in split("---", local.ai_app_prep) : trimspace(doc) if trimspace(doc) != ""]
   ai_app_yaml = [for doc in split("---", local.ai_app) : trimspace(doc) if trimspace(doc) != ""]
   ai_app_netshoot_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/netshoot_pod.yaml")) : trimspace(doc) if trimspace(doc) != ""]
 }
