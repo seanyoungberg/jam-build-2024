@@ -239,6 +239,17 @@ data "aws_iam_policy_document" "spoke_vm_policy" {
     ]
     resources = ["*"]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+    resources = [
+      "arn:aws:s3:::aws-jam-challenge-resources-${var.region}",
+      "arn:aws:s3:::aws-jam-challenge-resources-${var.region}/*"
+    ]
+  }
 }
 
 # IAM Policy
