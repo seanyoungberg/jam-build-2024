@@ -247,7 +247,7 @@ data "aws_iam_policy_document" "spoke_vm_policy" {
     ]
     resources = [
       "arn:aws:s3:::aws-jam-challenge-resources-${var.region}",
-      "arn:aws:s3:::aws-jam-challenge-resources-${var.region}/*"
+      "arn:aws:s3:::aws-jam-challenge-resources-${var.region}/*",
       "arn:aws:s3:::panw-aws-jam-challenge-resources-${var.region}",
       "arn:aws:s3:::panw-aws-jam-challenge-resources-${var.region}/*"
     ]
