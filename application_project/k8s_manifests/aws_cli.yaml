@@ -17,6 +17,9 @@ spec:
       containers:
       - name: aws-cli
         image: amazon/aws-cli
+        env:
+        - name: AWS_CA_BUNDLE
+          value: "/etc/pki/ca-trust/source/anchors/Trust-Root-CA.crt"
         command:
           - /bin/bash
         args:
