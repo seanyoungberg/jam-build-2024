@@ -13,7 +13,7 @@ spec:
       labels:
         app: netshoot
     spec:
-      serviceAccountName: "${service_account_name}"
+      serviceAccountName: eks-pods-sa
       containers:
       - name: netshoot
         image: nicolaka/netshoot

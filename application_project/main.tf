@@ -13,6 +13,7 @@ locals {
   # Pass in LB subnets for the Public ELB service
   app1_lb_subnet_ids_string = join(",", data.aws_subnets.app_subnets.ids)
 
+  # Read and template the file
   service_accounts = templatefile("${path.module}/k8s_manifests/service_accounts.yaml", {
     role_arn = data.aws_iam_role.bedrock_role.arn
   })
