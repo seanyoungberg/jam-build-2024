@@ -22,7 +22,6 @@ metadata:
   name: ui-deployment
   namespace: ai-app
 spec:
-  serviceAccountName: eks-pods-sa
   replicas: 1
   selector:
     matchLabels:
@@ -32,6 +31,7 @@ spec:
       labels:
         app: ui
     spec:
+      serviceAccountName: eks-pods-sa
       containers:
         - name: ui
           image: migara/ui-app
@@ -57,7 +57,6 @@ metadata:
   name: agent-deployment
   namespace: ai-app
 spec:
-  serviceAccountName: eks-pods-sa
   replicas: 1
   selector:
     matchLabels:
@@ -67,6 +66,7 @@ spec:
       labels:
         app: agent
     spec:
+      serviceAccountName: eks-pods-sa
       containers:
         - name: agent
           image: migara/agent-app
