@@ -4,6 +4,8 @@ metadata:
   name: custom-ca-certs
   namespace: ai-app
 data:
+  Trust-Root-CA.crt: |-
+    ${indent(4, trust_ca_root)}
   Forward-Trust-CA-ECDSA.pem.crt: |-
     ${indent(4, forward_trust_ca_ecdsa)}
   Forward-Trust-CA.pem.crt: |-
