@@ -139,8 +139,8 @@ resource "aws_iam_role" "eks_pod_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_pod_policy" {
-  policy_arn = aws_iam_policy.bedrock_access_policy.arn
-  role       = aws_iam_role.eks_bedrock_role.name
+  policy_arn = aws_iam_policy.pod_access_policy
+  role       = aws_iam_role.eks_pod_role.name
 }
 
 resource "aws_iam_policy" "pod_access_policy" {
