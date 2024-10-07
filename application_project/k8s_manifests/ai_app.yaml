@@ -22,6 +22,7 @@ metadata:
   name: ui-deployment
   namespace: ai-app
 spec:
+  serviceAccountName: eks-pods-sa
   replicas: 1
   selector:
     matchLabels:
@@ -56,6 +57,7 @@ metadata:
   name: agent-deployment
   namespace: ai-app
 spec:
+  serviceAccountName: eks-pods-sa
   replicas: 1
   selector:
     matchLabels:

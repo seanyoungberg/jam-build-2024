@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-cli-deployment
+  namespace: ai-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aws-cli
+  template:
+    metadata:
+      labels:
+        app: aws-cli
+    spec:
+      serviceAccountName: eks-pods-sa
+      containers:
+      - name: aws-cli
+        image: amazon/aws-cli
+        command: ["sleep", "infinity"]
+        args:
+        - -c
+        - |
+          cp /custom-certs/* /usr/local/share/ca-certificates/
+          update-ca-certificates
+          echo "Custom certificates added"
+          while true; do sleep 3600; done
+        volumeMounts:
+        - name: custom-certs
+          mountPath: /custom-certs
+          readOnly: true
+      volumes:
+      - name: custom-certs
+        configMap:
+          name: custom-ca-certs
