@@ -1,5 +1,5 @@
 ##################################################################
-# Session Manager VPC Endpoints for app1 VPC
+# Private Endpoints in App1 VPC
 ##################################################################
 
 # SSM, EC2Messages, and SSMMessages endpoints are required for Session Manager
@@ -43,10 +43,6 @@ resource "aws_vpc_endpoint" "spoke1_ssmmessages" {
   tags                = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-ssmmessages-endpoint" })
 }
 
-
-##################################################################
-# EKS Endpoints
-##################################################################
 resource "aws_vpc_endpoint" "eks" {
   vpc_id             = module.vpc["app1_vpc"].id
   service_name       = "com.amazonaws.${var.region}.eks"
@@ -114,6 +110,60 @@ resource "aws_vpc_endpoint" "ec2" {
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-ec2-endpoint" })
 }
 
+
+##################################################################
+# IAM For EKS Pods
+##################################################################
+
+resource "aws_iam_role" "eks_pod_role" {
+  name = "${var.name_prefix}eks-pod-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = module.eks_al2023.oidc_provider_arn
+        }
+        Condition = {
+          StringEquals = {
+            "${module.eks_al2023.oidc_provider}:aud" : "sts.amazonaws.com",
+            "${module.eks_al2023.oidc_provider}:sub" : "system:serviceaccount:default:bedrock-sa"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_pod_policy" {
+  policy_arn = aws_iam_policy.bedrock_access_policy.arn
+  role       = aws_iam_role.eks_bedrock_role.name
+}
+
+resource "aws_iam_policy" "pod_access_policy" {
+  name        = "${var.name_prefix}pod-access-policy"
+  path        = "/"
+  description = "IAM policy for accessing AWS Bedrock from EKS pods"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:ListFoundationModels",
+          "bedrock:InvokeModelWithResponseStream"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 ##################################################################
 # EKS Cluster
 ##################################################################
@@ -125,6 +175,7 @@ module "eks_al2023" {
   cluster_name                   = "${var.name_prefix}K8s"
   cluster_version                = "1.31"
   cluster_endpoint_public_access = true
+  enable_irsa = true
 
   #enable_cluster_creator_admin_permissions = true
   authentication_mode = "API_AND_CONFIG_MAP"
