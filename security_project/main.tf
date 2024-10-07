@@ -350,6 +350,10 @@ echo "CA certificates added to the system trust store."
 retry_command yum update -y
 retry_command yum install -y httpd python3 python3-pip awscli
 
+# Install boto3 for both root and ec2-user
+retry_command pip3 install boto3
+sudo -u ec2-user pip3 install --user boto3
+
 # Configure Apache
 systemctl start httpd
 systemctl enable httpd
@@ -383,14 +387,10 @@ echo "Downloaded aws_bedrock_llama_threat.py: $?"
 echo "Contents of /opt/myscripts after downloads:"
 ls -l /opt/myscripts
 
-
-# List the contents of the directory after downloads
-echo "Contents of /opt/myscripts after downloads:"
-ls -l /opt/myscripts
-
-
-# Make the main script executable
-sudo chmod +x /opt/myscripts/execute_scripts_aws.sh
+# Set correct permissions for scripts
+chown ec2-user:ec2-user /opt/myscripts/*.py /opt/myscripts/execute_scripts_aws.sh
+chmod 644 /opt/myscripts/*.py
+chmod 755 /opt/myscripts/execute_scripts_aws.sh
 
 # Set up a systemd service
 cat <<EOT > /etc/systemd/system/myscript.service
@@ -409,8 +409,20 @@ WantedBy=multi-user.target
 EOT
 
 # Enable and start the service
+systemctl daemon-reload
 systemctl enable myscript.service
 systemctl start myscript.service
+
+# Print some debug information
+echo "Python version:"
+python3 --version
+echo "Boto3 version:"
+python3 -c "import boto3; print(boto3.__version__)"
+echo "Contents of /opt/myscripts:"
+ls -l /opt/myscripts
+echo "Myscript service status:"
+systemctl status myscript.service
+
 EOF
 }
 
