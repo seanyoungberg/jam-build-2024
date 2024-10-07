@@ -13,38 +13,22 @@ spec:
       labels:
         app: netshoot
     spec:
-      initContainers:
-      - name: update-ca-certificates
-        image: alpine:3.14
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          mkdir -p /usr/local/share/ca-certificates/custom
-          cp /custom-certs/*.crt /usr/local/share/ca-certificates/custom/
-          update-ca-certificates
-          cp /etc/ssl/certs/ca-certificates.crt /shared-certs/
-          echo "CA certificates updated in init container"
-        volumeMounts:
-        - name: custom-certs
-          mountPath: /custom-certs
-          readOnly: true
-        - name: shared-certs
-          mountPath: /shared-certs
       containers:
       - name: netshoot
         image: nicolaka/netshoot
-        command: ["/bin/sh", "-c"]
+        command: ["/bin/sh"]
         args:
+        - -c
         - |
-          cp /shared-certs/ca-certificates.crt /etc/ssl/certs/
+          cp /custom-certs/* /usr/local/share/ca-certificates/
+          update-ca-certificates
+          echo "Custom certificates added"
           while true; do sleep 3600; done
         volumeMounts:
-        - name: shared-certs
-          mountPath: /shared-certs
+        - name: custom-certs
+          mountPath: /custom-certs
           readOnly: true
       volumes:
       - name: custom-certs
         configMap:
           name: custom-ca-certs
-      - name: shared-certs
-        emptyDir: {}
