@@ -130,7 +130,7 @@ resource "aws_iam_role" "eks_pod_role" {
         Condition = {
           StringEquals = {
             "${module.eks_al2023.oidc_provider}:aud" : "sts.amazonaws.com",
-            "${module.eks_al2023.oidc_provider}:sub" : "system:serviceaccount:default:bedrock-sa"
+            "${module.eks_al2023.oidc_provider}:sub" : "system:serviceaccount:ai-app:eks-pods-sa"
           }
         }
       }
