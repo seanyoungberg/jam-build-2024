@@ -235,7 +235,8 @@ data "aws_iam_policy_document" "spoke_vm_policy" {
     effect = "Allow"
     actions = [
       "bedrock:InvokeModel",
-      "bedrock:ListFoundationModels"
+      "bedrock:ListFoundationModels",
+      "bedrock:InvokeModelWithResponseStream"
     ]
     resources = ["*"]
   }
