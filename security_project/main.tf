@@ -365,7 +365,7 @@ cd /opt/myscripts
 
 # Download scripts from S3
 retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/execute_scripts_aws.sh .
-retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama3.py
+retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama3.py .
 retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama3_pj.py .
 retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama_pj.py .
 retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama_threat.py .
