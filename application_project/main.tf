@@ -5,9 +5,17 @@ data "aws_subnets" "app_subnets" {
   }
 }
 
+data "aws_iam_role" "bedrock_role" {
+  name = "${var.name_prefix}eks-pod-role"
+}
+
 locals {
   # Pass in LB subnets for the Public ELB service
   app1_lb_subnet_ids_string = join(",", data.aws_subnets.app_subnets.ids)
+
+  service_accounts = templatefile("${path.module}/k8s_manifests/service_accounts.yaml", {
+    role_arn = data.aws_iam_role.bedrock_role.arn
+  })
 
   # Read and template the file
   ai_app_ca = templatefile("${path.module}/k8s_manifests/ai_app_ca.yaml", {
@@ -27,9 +35,14 @@ locals {
   ai_app_netshoot_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/netshoot_pod.yaml")) : trimspace(doc) if trimspace(doc) != ""]
 }
 
+resource "kubectl_manifest" "service_accounts" {
+  yaml_body = local.service_accounts
+}
+
 resource "kubectl_manifest" "namespaces" {
   for_each  = { for idx, doc in local.namespaces : idx => doc if trimspace(doc) != "" }
   yaml_body = each.value
+  depends_on = [kubectl_manifest.service_accounts]
 }
 
 resource "kubectl_manifest" "ai_app_ca" {
