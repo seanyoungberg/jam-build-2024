@@ -390,7 +390,7 @@ ls -l /opt/myscripts
 
 
 # Make the main script executable
-chmod +x execute_scripts_aws.sh
+sudo chmod +x /opt/myscripts/execute_scripts_aws.sh
 
 # Set up a systemd service
 cat <<EOT > /etc/systemd/system/myscript.service
@@ -399,9 +399,10 @@ Description=My Script Service
 After=network.target
 
 [Service]
-ExecStart=/opt/myscripts/execute_scripts_aws.sh
+ExecStart=/bin/bash /opt/myscripts/execute_scripts_aws.sh
+WorkingDirectory=/opt/myscripts
 Restart=always
-User=root
+User=ec2-user
 
 [Install]
 WantedBy=multi-user.target
