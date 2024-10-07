@@ -13,6 +13,7 @@ spec:
       labels:
         app: netshoot
     spec:
+      serviceAccountName: "${service_account_name}"
       containers:
       - name: netshoot
         image: nicolaka/netshoot
