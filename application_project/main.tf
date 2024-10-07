@@ -33,7 +33,7 @@ locals {
   # Split the templated YAML into separate documents
   namespaces = [for doc in split("---", file("${path.module}/k8s_manifests/namespaces.yaml")) : trimspace(doc) if trimspace(doc) != ""]
   ai_app_yaml = [for doc in split("---", local.ai_app) : trimspace(doc) if trimspace(doc) != ""]
-  ai_app_netshoot_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/netshoot_pod.yaml")) : trimspace(doc) if trimspace(doc) != ""]
+  ai_app_netshoot_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/netshoot.yaml")) : trimspace(doc) if trimspace(doc) != ""]
 }
 
 resource "kubectl_manifest" "service_accounts" {
