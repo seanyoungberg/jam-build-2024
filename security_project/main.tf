@@ -248,6 +248,8 @@ data "aws_iam_policy_document" "spoke_vm_policy" {
     resources = [
       "arn:aws:s3:::aws-jam-challenge-resources-${var.region}",
       "arn:aws:s3:::aws-jam-challenge-resources-${var.region}/*"
+      "arn:aws:s3:::panw-aws-jam-challenge-resources-${var.region}",
+      "arn:aws:s3:::panw-aws-jam-challenge-resources-${var.region}/*"
     ]
   }
 }
@@ -362,11 +364,11 @@ mkdir -p /opt/myscripts
 cd /opt/myscripts
 
 # Download scripts from S3
-retry_command aws s3 cp s3://aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/execute_scripts_aws.sh .
-retry_command aws s3 cp s3://aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama.py .
-retry_command aws s3 cp s3://aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama_threat.py .
-retry_command aws s3 cp s3://aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama3.py .
-retry_command aws s3 cp s3://aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama3_pj.py .
+retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/execute_scripts_aws.sh .
+retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama.py .
+retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama_threat.py .
+retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama3.py .
+retry_command aws s3 cp s3://panw-aws-jam-challenge-resources-${var.region}/paloalto-ai-runtime-security/aws_bedrock_llama3_pj.py .
 
 # Make the main script executable
 chmod +x execute_scripts_aws.sh
