@@ -311,6 +311,28 @@ retry_command() {
     fi
 }
 
+# Add CA certificates to the system trust store
+echo "Adding CA certificates to the system trust store..."
+mkdir -p /etc/pki/ca-trust/source/anchors/
+
+# Create CA certificate files
+cat << EOT > /etc/pki/ca-trust/source/anchors/root-ca.crt
+${file("${path.module}/ca/Root-CA.pem")}
+EOT
+
+cat << EOT > /etc/pki/ca-trust/source/anchors/forward-trust-ca.crt
+${file("${path.module}/ca/Forward-Trust-CA.pem")}
+EOT
+
+cat << EOT > /etc/pki/ca-trust/source/anchors/forward-trust-ca-ecdsa.crt
+${file("${path.module}/ca/Forward-Trust-CA-ECDSA.pem")}
+EOT
+
+# Update the CA trust store
+update-ca-trust extract
+
+echo "CA certificates added to the system trust store."
+
 # Update and install packages
 retry_command yum update -y
 retry_command yum install -y httpd python3 python3-pip awscli
