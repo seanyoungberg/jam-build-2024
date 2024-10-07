@@ -34,6 +34,7 @@ locals {
   namespaces = [for doc in split("---", file("${path.module}/k8s_manifests/namespaces.yaml")) : trimspace(doc) if trimspace(doc) != ""]
   ai_app_yaml = [for doc in split("---", local.ai_app) : trimspace(doc) if trimspace(doc) != ""]
   ai_app_netshoot_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/netshoot.yaml")) : trimspace(doc) if trimspace(doc) != ""]
+  ai_app_aws_cli_yaml = [for doc in split("---", file("${path.module}/k8s_manifests/aws_cli.yaml")) : trimspace(doc) if trimspace(doc) != ""]
 }
 
 resource "kubectl_manifest" "service_accounts" {
@@ -59,6 +60,12 @@ resource "kubectl_manifest" "ai_app" {
 
 resource "kubectl_manifest" "ai_app_netshoot" {
   for_each  = { for idx, doc in local.ai_app_netshoot_yaml : idx => doc if trimspace(doc) != "" }
+  yaml_body = each.value
+  depends_on = [kubectl_manifest.ai_app_ca]
+}
+
+resource "kubectl_manifest" "ai_app_aws_cli" {
+  for_each  = { for idx, doc in local.ai_app_aws_cli_yaml : idx => doc if trimspace(doc) != "" }
   yaml_body = each.value
   depends_on = [kubectl_manifest.ai_app_ca]
 }
