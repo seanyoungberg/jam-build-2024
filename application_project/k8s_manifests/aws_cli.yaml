@@ -17,14 +17,16 @@ spec:
       containers:
       - name: aws-cli
         image: amazon/aws-cli
-        command: ["sleep", "infinity"]
+        command:
+          - /bin/bash
         args:
-        - -c
-        - |
-          cp /custom-certs/* /usr/local/share/ca-certificates/
-          update-ca-certificates
-          echo "Custom certificates added"
-          while true; do sleep 3600; done
+          - -c
+          - |
+            yum install -y ca-certificates
+            cp /custom-certs/* /etc/pki/ca-trust/source/anchors/
+            update-ca-trust
+            echo "Custom certificates added"
+            sleep infinity
         volumeMounts:
         - name: custom-certs
           mountPath: /custom-certs
