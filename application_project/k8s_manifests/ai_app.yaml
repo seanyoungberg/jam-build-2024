@@ -39,21 +39,22 @@ spec:
             - containerPort: 3000
           env:
             - name: NODE_EXTRA_CA_CERTS
-              value: "/etc/ssl/certs/Trust-Root-CA.crt"
+              value: "/etc/ssl/certs/Trust-Root-CA.crt"  # Keep this if needed for CA certs
           volumeMounts:
             - name: custom-certs
               mountPath: /custom-certs
               readOnly: true
-          command:
-            - /bin/bash
-          args:
-            - -c
-            - |
-              apt update && apt install -y ca-certificates
-              cp /custom-certs/* /usr/local/share/ca-certificates/
-              update-ca-certificates
-              echo "Custom certificates added"
-              sleep infinity
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    apt update && apt install -y ca-certificates
+                    cp /custom-certs/* /usr/local/share/ca-certificates/
+                    update-ca-certificates
+                    echo "Custom certificates added"
       volumes:
         - name: custom-certs
           configMap:
