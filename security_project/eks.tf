@@ -156,7 +156,9 @@ resource "aws_iam_policy" "pod_access_policy" {
         Action = [
           "bedrock:InvokeModel",
           "bedrock:ListFoundationModels",
-          "bedrock:InvokeModelWithResponseStream"
+          "bedrock:InvokeModelWithResponseStream",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupIngress"
         ]
         Resource = "*"
       }
