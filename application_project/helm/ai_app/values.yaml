@@ -1,0 +1,46 @@
+# values.yaml
+namespace:
+  app: ai-app
+  ingress: ingress-nginx
+
+podrole: arn:aws:iam::12345678:role/ks-pod-role
+
+ui:
+  replicaCount: 1
+  image:
+    repository: migara/ui-app
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 80
+    targetPort: 3000
+  serviceAccountName: eks-pods-sa
+
+agent:
+  replicaCount: 1
+  image:
+    repository: migara/agent-app
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 80
+    targetPort: 3001
+  serviceAccountName: eks-pods-sa
+
+ingress:
+  enabled: true
+  className: "nginx"
+  subnets: "subnet-0e8e8e8e8e8e8e8e,subnet-0e8e8e8e8e8e8e8e"
+  rules:
+    - http:
+        paths:
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service: agent-service
+              port: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service: ui-service
+              port: 80
