@@ -2,14 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ui-service
-  namespace: ai-app
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-subnets: "${lb_subnet_ids}"
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 3000
@@ -20,7 +14,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ui-deployment
-  namespace: ai-app
 spec:
   replicas: 1
   selector:
@@ -31,44 +24,20 @@ spec:
       labels:
         app: ui
     spec:
-      serviceAccountName: eks-pods-sa
       containers:
         - name: ui
           image: migara/ui-app
           ports:
             - containerPort: 3000
-          env:
-            - name: NODE_EXTRA_CA_CERTS
-              value: "/etc/ssl/certs/Trust-Root-CA.crt"  # Keep this if needed for CA certs
-          volumeMounts:
-            - name: custom-certs
-              mountPath: /custom-certs
-              readOnly: true
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    apt update && apt install -y ca-certificates
-                    cp /custom-certs/* /usr/local/share/ca-certificates/
-                    update-ca-certificates
-                    echo "Custom certificates added"
-      volumes:
-        - name: custom-certs
-          configMap:
-            name: custom-ca-certs
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: agent-service
-  namespace: ai-app
 spec:
   type: ClusterIP
   ports:
-    - port: 3001
+    - port: 80
       targetPort: 3001
   selector:
     app: agent
@@ -77,7 +46,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: agent-deployment
-  namespace: ai-app
 spec:
   replicas: 1
   selector:
@@ -94,24 +62,31 @@ spec:
           image: migara/agent-app
           ports:
             - containerPort: 3001
-          env:
-            - name: NODE_EXTRA_CA_CERTS
-              value: "/etc/ssl/certs/Trust-Root-CA.crt"
-          volumeMounts:
-            - name: custom-certs
-              mountPath: /custom-certs
-              readOnly: true
-          command:
-            - /bin/bash
-          args:
-            - -c
-            - |
-              apt update && apt install -y ca-certificates
-              cp /custom-certs/* /usr/local/share/ca-certificates/
-              update-ca-certificates
-              echo "Custom certificates added"
-              sleep infinity
-      volumes:
-        - name: custom-certs
-          configMap:
-            name: custom-ca-certs
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-ingress
+  annotations:
+    # nginx.ingress.kubernetes.io/rewrite-target: /$1
+  # namespace:
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # - path: /api(/|$)(.*)
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: agent-service
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ui-service
+                port:
+                  number: 80
