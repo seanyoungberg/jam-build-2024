@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.netshoot.deploymentName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.netshoot.replicas }}
+  selector:
+    matchLabels:
+      app: netshoot
+  template:
+    metadata:
+      labels:
+        app: netshoot
+    spec:
+      serviceAccountName: {{ .Values.netshoot.serviceAccountName }}
+      containers:
+      - name: netshoot
+        image: {{ .Values.netshoot.image }}
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          cp /custom-certs/* /usr/local/share/ca-certificates/
+          update-ca-certificates
+          echo "Custom certificates added"
+          while true; do sleep 3600; done
+        volumeMounts:
+        - name: custom-certs
+          mountPath: /custom-certs
+          readOnly: true
+      volumes:
+      - name: custom-certs
+        configMap:
+          name: {{ .Values.netshoot.customCertsConfigMap }}

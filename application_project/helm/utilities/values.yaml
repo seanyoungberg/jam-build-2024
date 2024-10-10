@@ -1,0 +1,17 @@
+# values.yaml
+namespace:
+  app: utilities
+
+podrole: arn:aws:iam::12345678:role/ks-pod-role
+
+# Values for netshoot.yaml
+netshoot:
+  deploymentName: netshoot-deployment
+  replicas: 1
+  image: nicolaka/netshoot
+  serviceAccountName: eks-pods-sa
+  customCertsConfigMap: custom-ca-certs
+
+trustCaRoot: {{ .Files.Get "../../../ca/Trust-Root-CA.crt" | nindent 4 }}
+forwardTrustCaEcdsa: {{ .Files.Get "../../../ca/Forward-Trust-CA-ECDSA.pem.crt" | nindent 4 }}
+forwardTrustCa: {{ .Files.Get "../../../ca/Forward-Trust-CA.pem.crt" | nindent 4 }}
