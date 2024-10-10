@@ -551,7 +551,7 @@ module "vm_series_asg" {
   source = "../modules/asg"
 
   for_each = var.vmseries_asgs
-
+  reserved_concurrent_executions  = each.value.asg.lambda_reserved_concurrent_executions
   ssh_key_name                    = data.aws_key_pair.ec2.key_name
   region                          = var.region
   name_prefix                     = var.name_prefix
