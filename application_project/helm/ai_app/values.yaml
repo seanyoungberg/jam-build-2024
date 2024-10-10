@@ -29,18 +29,15 @@ agent:
 
 ingress:
   enabled: true
-  className: "nginx"
-  subnets: "subnet-0e8e8e8e8e8e8e8e,subnet-0e8e8e8e8e8e8e8e"
-  rules:
-    - http:
-        paths:
-          - path: /api/
-            pathType: Prefix
-            backend:
-              service: agent-service
-              port: 80
-          - path: /
-            pathType: Prefix
-            backend:
-              service: ui-service
-              port: 80
+  className: nginx
+  proxyReadTimeout: "3600"
+  proxySendTimeout: "3600"
+  paths:
+    - path: /api/
+      pathType: Prefix
+      serviceName: agent-service
+      servicePort: 80
+    - path: /
+      pathType: Prefix
+      serviceName: ui-service
+      servicePort: 80
