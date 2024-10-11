@@ -11,7 +11,3 @@ netshoot:
   image: nicolaka/netshoot
   serviceAccountName: eks-pods-sa
   customCertsConfigMap: custom-ca-certs
-
-trustCaRoot: {{ .Files.Get "../../../ca/Trust-Root-CA.crt" }}
-forwardTrustCaEcdsa: {{ .Files.Get "../../../ca/Forward-Trust-CA-ECDSA.pem.crt" }}
-forwardTrustCa: {{ .Files.Get "../../../ca/Forward-Trust-CA.pem.crt" }}

@@ -2,11 +2,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: custom-ca-certs
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.namespace.app }}
 data:
   Trust-Root-CA.crt: |-
-{{ .Values.trustCaRoot | nindent 4 }}
+{{ .Files.Get "../../../ca/Trust-Root-CA.crt" | nindent 4 }}
   Forward-Trust-CA-ECDSA.pem.crt: |-
-{{ .Values.forwardTrustCaEcdsa | nindent 4 }}
+{{ .Files.Get "../../../ca/Forward-Trust-CA-ECDSA.pem.crt" | nindent 4 }}
   Forward-Trust-CA.pem.crt: |-
-{{ .Values.forwardTrustCa | nindent 4 }}
+{{ .Files.Get "../../../ca/Forward-Trust-CA.pem.crt" | nindent 4 }}
