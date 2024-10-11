@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.netshoot.deploymentName }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.namespace.app }}
 spec:
   replicas: {{ .Values.netshoot.replicas }}
   selector:
