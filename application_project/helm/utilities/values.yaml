@@ -12,6 +12,6 @@ netshoot:
   serviceAccountName: eks-pods-sa
   customCertsConfigMap: custom-ca-certs
 
-trustCaRoot: {{ .Files.Get "../../../ca/Trust-Root-CA.crt" | nindent 4 }}
-forwardTrustCaEcdsa: {{ .Files.Get "../../../ca/Forward-Trust-CA-ECDSA.pem.crt" | nindent 4 }}
-forwardTrustCa: {{ .Files.Get "../../../ca/Forward-Trust-CA.pem.crt" | nindent 4 }}
+trustCaRoot: {{ .Files.Get "../../../ca/Trust-Root-CA.crt" }}
+forwardTrustCaEcdsa: {{ .Files.Get "../../../ca/Forward-Trust-CA-ECDSA.pem.crt" }}
+forwardTrustCa: {{ .Files.Get "../../../ca/Forward-Trust-CA.pem.crt" }}
