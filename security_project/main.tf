@@ -551,7 +551,6 @@ module "vm_series_asg" {
   source = "../modules/asg"
 
   for_each = var.vmseries_asgs
-  reserved_concurrent_executions  = each.value.asg.lambda_reserved_concurrent_executions
   ssh_key_name                    = data.aws_key_pair.ec2.key_name
   region                          = var.region
   name_prefix                     = var.name_prefix
@@ -565,6 +564,7 @@ module "vm_series_asg" {
   desired_capacity                = each.value.asg.desired_cap
   health_check_grace_period       = each.value.asg.health_check_grace_period
   lambda_execute_pip_install_once = each.value.asg.lambda_execute_pip_install_once
+  reserved_concurrent_executions  = each.value.asg.lambda_reserved_concurrent_executions
   instance_refresh                = each.value.instance_refresh
   #launch_template_version         = each.value.launch_template_version
   vmseries_ami_id               = each.value.vmseries_ami_id
