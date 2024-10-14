@@ -466,6 +466,7 @@ variable "vmseries_asgs" {
       instance_type                   = string
       health_check_grace_period       = number
       lambda_execute_pip_install_once = bool
+      lambda_reserved_concurrent_executions = number
     })
 
     scaling_plan = object({
