@@ -10,6 +10,7 @@ ui:
   image:
     repository: migara/ui-app
     pullPolicy: Always
+    tag: latest
   service:
     port: 80
     targetPort: 3000
@@ -20,6 +21,7 @@ agent:
   image:
     repository: migara/agent-app
     pullPolicy: Always
+    tag: latest
   service:
     port: 80
     targetPort: 3001
