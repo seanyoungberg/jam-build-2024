@@ -375,7 +375,7 @@ EOT
       # ami_type                               = "AL2023_x86_64_STANDARD"
       # instance_types                         = ["m6i.large"]
       instance_types                         = ["t3.small"]
-      key_name                               = var.ssh_key_name
+      key_name                               = data.aws_key_pair.ec2.key_name
       iam_role_use_name_prefix               = true
       cluster_security_group_use_name_prefix = true
       iam_role_additional_policies           = { SSM = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" }
