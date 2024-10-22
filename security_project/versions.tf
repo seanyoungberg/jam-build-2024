@@ -28,7 +28,7 @@ provider "aws" {
 #   name = module.eks_al2023.aws_eks_cluster.this[0].name
 # }
 
-provider "kubectl" {
+provider "kubernetes" {
   host                   = element(module.eks_al2023.cluster_endpoint, 0)
   cluster_ca_certificate = base64decode(element(module.eks_al2023.cluster_certificate_authority_data, 0))
   exec {
