@@ -409,13 +409,14 @@ module "eks" {
   aws_auth_roles = [
     {
       rolearn  = var.user_iam_role
-      username = "role1"
+      username = "labuser"
       groups   = ["system:masters"]
     },
     {
       rolearn  = var.codebuild_iam_role
-      username = "role1"
+      username = "codebuild"
       groups   = ["system:masters"]
     },
   ]
+  depends_on = [module.eks_al2023]
 }
