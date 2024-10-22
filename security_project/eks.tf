@@ -176,40 +176,38 @@ module "eks_al2023" {
   cluster_name                   = "${var.name_prefix}K8s"
   cluster_version                = "1.31"
   cluster_endpoint_public_access = true
-  enable_irsa = true
-
-  #enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = true
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  access_entries = {
-    # One access entry with a policy associated
-    example = {
-      kubernetes_groups = []
-      principal_arn     = var.user_iam_role
+  # access_entries = {
+  #   # One access entry with a policy associated
+  #   example = {
+  #     kubernetes_groups = []
+  #     principal_arn     = var.user_iam_role
 
-      policy_associations = {
-        example = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    codebuild = {
-      kubernetes_groups = []
-      principal_arn     = var.codebuild_iam_role
+  #     policy_associations = {
+  #       example = {
+  #         policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  #         access_scope = {
+  #           type = "cluster"
+  #         }
+  #       }
+  #     }
+  #   }
+  #   codebuild = {
+  #     kubernetes_groups = []
+  #     principal_arn     = var.codebuild_iam_role
 
-      policy_associations = {
-        example = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-  }
+  #     policy_associations = {
+  #       example = {
+  #         policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  #         access_scope = {
+  #           type = "cluster"
+  #         }
+  #       }
+  #     }
+  #   }
+  # }
 
   # EKS Addons
   cluster_addons = {
@@ -385,7 +383,7 @@ EOT
       max_size = 3
       # This value is ignored after the initial creation
       # https://github.com/bryantbiggs/eks-desired-size-hack
-      desired_size = 2
+      desired_size = 1
 
       #pre_bootstrap_user_data = file("${path.module}/add_ca.sh")
 
@@ -398,4 +396,26 @@ EOT
   }
 
   tags = var.global_tags
+}
+
+## Set IAM role mapping
+
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+  version = "~> 20.0"
+
+  manage_aws_auth_configmap = true
+
+  aws_auth_roles = [
+    {
+      rolearn  = var.user_iam_role
+      username = "role1"
+      groups   = ["system:masters"]
+    },
+    {
+      rolearn  = var.codebuild_iam_role
+      username = "role1"
+      groups   = ["system:masters"]
+    },
+  ]
 }
