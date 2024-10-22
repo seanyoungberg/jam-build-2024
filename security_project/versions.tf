@@ -29,11 +29,11 @@ provider "aws" {
 # }
 
 provider "kubernetes" {
-  host                   = element(module.eks_al2023.cluster_endpoint, 0)
-  cluster_ca_certificate = base64decode(element(module.eks_al2023.cluster_certificate_authority_data, 0))
+  host                   = module.eks_al2023.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_al2023.cluster_certificate_authority_data)
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", element(module.eks_al2023.cluster_name, 0)]
+    args        = ["eks", "get-token", "--cluster-name", module.eks_al2023.cluster_name]
   }
 }
