@@ -174,6 +174,7 @@ module "gwlbe_endpoint" {
   gwlb_service_name = module.gwlb[each.value.gwlb].endpoint_service.service_name
   vpc_id            = module.subnet_sets[each.value.vpc_subnet].vpc_id
   subnets           = module.subnet_sets[each.value.vpc_subnet].subnets
+  tags              = var.global_tags
 
   act_as_next_hop_for = each.value.act_as_next_hop ? {
     "from-igw-to-lb" = {
