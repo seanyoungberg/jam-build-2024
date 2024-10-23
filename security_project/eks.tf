@@ -173,41 +173,21 @@ module "eks_al2023" {
   source  = "terraform-aws-modules/eks/aws"
   version = "v20.24.2"
 
-  cluster_name                   = "${var.name_prefix}K8s"
+  cluster_name                   = "${var.name_prefix}eks"
   cluster_version                = "1.31"
   cluster_endpoint_public_access = true
   enable_cluster_creator_admin_permissions = true
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  # access_entries = {
-  #   # One access entry with a policy associated
-  #   example = {
-  #     kubernetes_groups = []
-  #     principal_arn     = var.user_iam_role
-
-  #     policy_associations = {
-  #       example = {
-  #         policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  #         access_scope = {
-  #           type = "cluster"
-  #         }
-  #       }
-  #     }
-  #   }
-  #   codebuild = {
-  #     kubernetes_groups = []
-  #     principal_arn     = var.codebuild_iam_role
-
-  #     policy_associations = {
-  #       example = {
-  #         policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  #         access_scope = {
-  #           type = "cluster"
-  #         }
-  #       }
-  #     }
-  #   }
-  # }
+# Got tired of digging through to see if the module pulls these from root or from eks_managed_node_groups nested var. Including in both
+  cluster_tags = var.global_tags
+  create_cluster_primary_security_group_tags = var.global_tags
+  cluster_security_group_name = "${var.name_prefix}eks-cluster-sg"
+  iam_role_name              = "${var.name_prefix}eks-node-role"
+  iam_role_additional_policies           = { SSM = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" }
+  iam_role_tags                          = var.global_tags
+  node_security_group_name = "${var.name_prefix}eks-node-sg"
+  node_security_group_tags = var.global_tags
 
   # EKS Addons
   cluster_addons = {
@@ -369,15 +349,21 @@ EOT
   eks_managed_node_groups = {
     managed_node_group_1 = {
       # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
-      name = "${var.name_prefix}K8s-node"
+      name = "${var.name_prefix}eks-node-group"
       # ami_type                               = "AL2023_x86_64_STANDARD"
       # instance_types                         = ["m6i.large"]
       instance_types                         = ["t3.small"]
       key_name                               = data.aws_key_pair.ec2.key_name
-      iam_role_use_name_prefix               = true
-      cluster_security_group_use_name_prefix = true
+      cluster_tags = var.global_tags
+      create_cluster_primary_security_group_tags = var.global_tags
+      cluster_security_group_name = "${var.name_prefix}eks-cluster-sg"
+      launch_template_name =  "${var.name_prefix}eks-node-launch"
+      launch_template_tags = var.global_tags
+      iam_role_name              = "${var.name_prefix}eks-node-role"
       iam_role_additional_policies           = { SSM = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" }
       iam_role_tags                          = var.global_tags
+      node_security_group_name = "${var.name_prefix}eks-node-sg"
+      node_security_group_tags = var.global_tags
 
       min_size = 1
       max_size = 3
@@ -391,7 +377,7 @@ EOT
       # This is not required - demonstrates how to pass additional configuration to nodeadm
       # Ref https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/     
       #cloudinit_pre_nodeadm = []
-      launch_template_tags = var.global_tags
+      
     }
   }
 
