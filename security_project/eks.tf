@@ -448,7 +448,6 @@ EOT
 
   lifecycle {
     create_before_destroy = false
-    prevent_destroy       = true
     ignore_changes        = all
   }
 }
