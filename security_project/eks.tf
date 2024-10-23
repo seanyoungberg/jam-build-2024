@@ -412,37 +412,37 @@ resource "null_resource" "aws_auth_configmap" {
 
   provisioner "local-exec" {
     command = <<EOT
-      set -e
+set -e
 
-      aws eks wait cluster-active --name ${var.name_prefix}eks --region ${var.region}
+aws eks wait cluster-active --name ${var.name_prefix}eks --region ${var.region}
 
-      aws eks update-kubeconfig --name ${var.name_prefix}eks --region ${var.region} --kubeconfig kubeconfig_${var.name_prefix}eks
+aws eks update-kubeconfig --name ${var.name_prefix}eks --region ${var.region} --kubeconfig kubeconfig_${var.name_prefix}eks
 
-      export KUBECONFIG=kubeconfig_${var.name_prefix}eks
+export KUBECONFIG=kubeconfig_${var.name_prefix}eks
 
-      kubectl apply -f - <<EOF
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: aws-auth
-        namespace: kube-system
-      data:
-        mapRoles: |
-          - rolearn: ${var.user_iam_role}
-            username: labuser
-            groups:
-              - system:masters
-          - rolearn: ${var.codebuild_iam_role}
-            username: codebuild
-            groups:
-              - system:masters
-          - rolearn: ${module.eks_al2023.eks_managed_node_groups["managed_node_group_1"].iam_role_arn}
-            username: system:node:{{EC2PrivateDNSName}}
-            groups:
-              - system:bootstrappers
-              - system:nodes
-      EOF
-    EOT
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - rolearn: ${var.user_iam_role}
+      username: labuser
+      groups:
+        - system:masters
+    - rolearn: ${var.codebuild_iam_role}
+      username: codebuild
+      groups:
+        - system:masters
+    - rolearn: ${module.eks_al2023.eks_managed_node_groups["managed_node_group_1"].iam_role_arn}
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes
+EOF
+EOT
     interpreter = ["/bin/bash", "-c"]
   }
 
@@ -452,4 +452,5 @@ resource "null_resource" "aws_auth_configmap" {
     ignore_changes        = all
   }
 }
+
 
