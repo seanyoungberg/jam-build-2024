@@ -21,12 +21,12 @@ provider "aws" {
 }
 
 data "aws_eks_cluster" "eks_cluster" {
-  name = module.eks_al2023.cluster_name
+  name = "${var.name_prefix}eks"
   depends_on = [module.eks_al2023]
 }
 
 data "aws_eks_cluster_auth" "eks_cluster" {
-  name = module.eks_al2023.cluster_name
+  name = "${var.name_prefix}eks"
   depends_on = [module.eks_al2023]
 }
 provider "kubernetes" {
