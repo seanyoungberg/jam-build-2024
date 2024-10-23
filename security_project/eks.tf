@@ -436,7 +436,8 @@ resource "null_resource" "aws_auth_configmap" {
             username: codebuild
             groups:
               - system:masters
-          - rolearn: ${module.eks_al2023.managed_node_groups["managed_node_group_1"].iam_role_arn}
+          - rolearn: ${module.eks_al2023.eks_managed_node_group["managed_node_group_1"].iam_role_arn}
+
             username: system:node:{{EC2PrivateDNSName}}
             groups:
               - system:bootstrappers
