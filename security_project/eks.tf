@@ -414,16 +414,12 @@ resource "null_resource" "aws_auth_configmap" {
     command = <<EOT
       set -e
 
-      # Wait for the EKS cluster to become active
       aws eks wait cluster-active --name ${var.name_prefix}eks --region ${var.region}
 
-      # Update kubeconfig
       aws eks update-kubeconfig --name ${var.name_prefix}eks --region ${var.region} --kubeconfig kubeconfig_${var.name_prefix}eks
 
-      # Set KUBECONFIG environment variable
       export KUBECONFIG=kubeconfig_${var.name_prefix}eks
 
-      # Apply the aws-auth ConfigMap
       kubectl apply -f - <<EOF
       apiVersion: v1
       kind: ConfigMap
@@ -440,7 +436,7 @@ resource "null_resource" "aws_auth_configmap" {
             username: codebuild
             groups:
               - system:masters
-          - rolearn: ${module.eks_al2023.worker_iam_role_arn}
+          - rolearn: ${module.eks_al2023.managed_node_groups["managed_node_group_1"].iam_role_arn}
             username: system:node:{{EC2PrivateDNSName}}
             groups:
               - system:bootstrappers
@@ -450,10 +446,10 @@ resource "null_resource" "aws_auth_configmap" {
     interpreter = ["/bin/bash", "-c"]
   }
 
-  # Prevent Terraform from tracking the state of this resource beyond creation
   lifecycle {
     create_before_destroy = false
     prevent_destroy       = true
     ignore_changes        = all
   }
 }
+
