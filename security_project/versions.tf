@@ -21,11 +21,11 @@ provider "aws" {
 }
 
 data "aws_eks_cluster" "eks_cluster" {
-  name = "${var.name_prefix}eks"
+  name = "${var.name_prefix}K8s"
 }
 
 data "aws_eks_cluster_auth" "eks_cluster" {
-  name = "${var.name_prefix}eks"
+  name = "${var.name_prefix}K8s"
 }
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.eks_cluster.endpoint
