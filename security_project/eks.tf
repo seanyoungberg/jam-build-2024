@@ -181,7 +181,7 @@ module "eks_al2023" {
 
 # Got tired of digging through to see if the module pulls these from root or from eks_managed_node_groups nested var. Including in both
   cluster_tags = var.global_tags
-  create_cluster_primary_security_group_tags = var.global_tags
+  create_cluster_primary_security_group_tags = true
   cluster_security_group_name = "${var.name_prefix}eks-cluster-sg"
   iam_role_name              = "${var.name_prefix}eks-node-role"
   iam_role_additional_policies           = { SSM = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" }
@@ -355,7 +355,7 @@ EOT
       instance_types                         = ["t3.small"]
       key_name                               = data.aws_key_pair.ec2.key_name
       cluster_tags = var.global_tags
-      create_cluster_primary_security_group_tags = var.global_tags
+      create_cluster_primary_security_group_tags = true
       cluster_security_group_name = "${var.name_prefix}eks-cluster-sg"
       launch_template_name =  "${var.name_prefix}eks-node-launch"
       launch_template_tags = var.global_tags
