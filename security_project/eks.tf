@@ -386,23 +386,74 @@ EOT
 
 ## Set IAM role mapping
 
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version = "~> 20.0"
+# module "eks" {
+#   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+#   version = "~> 20.0"
 
-  manage_aws_auth_configmap = true
+#   manage_aws_auth_configmap = true
 
-  aws_auth_roles = [
-    {
-      rolearn  = var.user_iam_role
-      username = "labuser"
-      groups   = ["system:masters"]
-    },
-    {
-      rolearn  = var.codebuild_iam_role
-      username = "codebuild"
-      groups   = ["system:masters"]
-    },
-  ]
+#   aws_auth_roles = [
+#     {
+#       rolearn  = var.user_iam_role
+#       username = "labuser"
+#       groups   = ["system:masters"]
+#     },
+#     {
+#       rolearn  = var.codebuild_iam_role
+#       username = "codebuild"
+#       groups   = ["system:masters"]
+#     },
+#   ]
+#   depends_on = [module.eks_al2023]
+# }
+
+resource "null_resource" "aws_auth_configmap" {
   depends_on = [module.eks_al2023]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      set -e
+
+      # Wait for the EKS cluster to become active
+      aws eks wait cluster-active --name ${var.name_prefix}eks --region ${var.region}
+
+      # Update kubeconfig
+      aws eks update-kubeconfig --name ${var.name_prefix}eks --region ${var.region} --kubeconfig kubeconfig_${var.name_prefix}eks
+
+      # Set KUBECONFIG environment variable
+      export KUBECONFIG=kubeconfig_${var.name_prefix}eks
+
+      # Apply the aws-auth ConfigMap
+      kubectl apply -f - <<EOF
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: aws-auth
+        namespace: kube-system
+      data:
+        mapRoles: |
+          - rolearn: ${var.user_iam_role}
+            username: labuser
+            groups:
+              - system:masters
+          - rolearn: ${var.codebuild_iam_role}
+            username: codebuild
+            groups:
+              - system:masters
+          - rolearn: ${module.eks_al2023.worker_iam_role_arn}
+            username: system:node:{{EC2PrivateDNSName}}
+            groups:
+              - system:bootstrappers
+              - system:nodes
+      EOF
+    EOT
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  # Prevent Terraform from tracking the state of this resource beyond creation
+  lifecycle {
+    create_before_destroy = false
+    prevent_destroy       = true
+    ignore_changes        = all
+  }
 }
