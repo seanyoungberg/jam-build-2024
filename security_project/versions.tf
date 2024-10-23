@@ -20,20 +20,17 @@ provider "aws" {
   region = var.region
 }
 
-# data "aws_eks_cluster" "cluster" {
-#   name = module.eks_al2023.aws_eks_cluster.this[0].name
-# }
+data "aws_eks_cluster" "eks_cluster" {
+  name = module.eks_al2023.cluster_name
+  depends_on = [module.eks_al2023]
+}
 
-# data "aws_eks_cluster_auth" "cluster" {
-#   name = module.eks_al2023.aws_eks_cluster.this[0].name
-# }
-
+data "aws_eks_cluster_auth" "eks_cluster" {
+  name = module.eks_al2023.cluster_name
+  depends_on = [module.eks_al2023]
+}
 provider "kubernetes" {
-  host                   = module.eks_al2023.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks_al2023.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.eks_al2023.cluster_name]
-  }
+  host                   = data.aws_eks_cluster.eks_cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks_cluster.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.eks_cluster.token
 }
