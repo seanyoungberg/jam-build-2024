@@ -194,7 +194,16 @@ module "eks_al2023" {
     coredns                = {}
     eks-pod-identity-agent = {}
     kube-proxy             = {}
-    vpc-cni                = {}
+    vpc-cni = {
+      configuration_values = jsonencode({
+        env = [
+          {
+            name  = "AWS_VPC_K8S_CNI_EXTERNALSNAT"
+            value = "false"
+          }
+        ]
+      })
+    }
   }
 
   vpc_id     = module.vpc["app1_vpc"].id
