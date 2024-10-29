@@ -15,6 +15,12 @@ variable "ssh_key_name" {
   type        = string
 }
 
+variable "ssh_key_name_alternate" {
+  description = "Alternate ssh key pair. Data lookup will appened a wildcard suffix"
+  type        = string
+}
+
+
 variable "unique_id" {
   description = "String prefix to apply to resource names that need to be unique"
   type        = string

@@ -5,7 +5,7 @@ data "aws_key_pair" "ec2" {
 
   filter {
     name   = "key-name"
-    values = [var.ssh_key_name]
+    values = [var.ssh_key_name, var.ssh_key_name_alternate]
   }
 }
 
