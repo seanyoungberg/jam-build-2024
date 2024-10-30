@@ -170,13 +170,14 @@ resource "aws_iam_policy" "pod_access_policy" {
 ##################################################################
 
 module "eks_al2023" {
-  source  = "terraform-aws-modules/eks/aws"
+  source  = "../modules/eks_al2023"
   version = "v20.24.2"
 
   cluster_name                   = "${var.name_prefix}eks"
   cluster_version                = "1.31"
   cluster_endpoint_public_access = true
-  #enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
+  default_bootstrap_cluster_creator_admin_permissions = true
   authentication_mode = "API_AND_CONFIG_MAP"
 
 # Got tired of digging through to see if the module pulls these from root or from eks_managed_node_groups nested var. Including in both
