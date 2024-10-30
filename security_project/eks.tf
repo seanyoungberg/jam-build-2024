@@ -171,7 +171,6 @@ resource "aws_iam_policy" "pod_access_policy" {
 
 module "eks_al2023" {
   source  = "../modules/eks_al2023"
-  version = "v20.24.2"
 
   cluster_name                   = "${var.name_prefix}eks"
   cluster_version                = "1.31"
