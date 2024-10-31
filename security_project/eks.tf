@@ -5,7 +5,7 @@
 # SSM, EC2Messages, and SSMMessages endpoints are required for Session Manager
 resource "aws_vpc_endpoint" "spoke1_ssm" {
   vpc_id              = module.vpc["app1_vpc"].id
-  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id] ##TODO fix this
+  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id] ##TODO fix this
   service_name        = "com.amazonaws.${var.region}.ssm"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
@@ -15,7 +15,7 @@ resource "aws_vpc_endpoint" "spoke1_ssm" {
 
 resource "aws_vpc_endpoint" "spoke1_kms" {
   vpc_id              = module.vpc["app1_vpc"].id
-  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id] ##TODO fix this
+  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id] ##TODO fix this
   service_name        = "com.amazonaws.${var.region}.kms"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
@@ -25,7 +25,7 @@ resource "aws_vpc_endpoint" "spoke1_kms" {
 
 resource "aws_vpc_endpoint" "spoke1_ec2messages" {
   vpc_id              = module.vpc["app1_vpc"].id
-  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id] ##TODO fix this
+  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id] ##TODO fix this
   service_name        = "com.amazonaws.${var.region}.ec2messages"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
@@ -35,7 +35,7 @@ resource "aws_vpc_endpoint" "spoke1_ec2messages" {
 
 resource "aws_vpc_endpoint" "spoke1_ssmmessages" {
   vpc_id              = module.vpc["app1_vpc"].id
-  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id] ##TODO fix this
+  subnet_ids          = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id] ##TODO fix this
   service_name        = "com.amazonaws.${var.region}.ssmmessages"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
@@ -48,7 +48,7 @@ resource "aws_vpc_endpoint" "eks" {
   service_name       = "com.amazonaws.${var.region}.eks"
   vpc_endpoint_type  = "Interface"
   private_dns_enabled = true
-  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-eks-endpoint" })
 }
@@ -58,7 +58,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   service_name       = "com.amazonaws.${var.region}.ecr.api"
   vpc_endpoint_type  = "Interface"
   private_dns_enabled = true
-  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-ecr-endpoint" })
 }
@@ -68,7 +68,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   service_name       = "com.amazonaws.${var.region}.ecr.dkr"
   vpc_endpoint_type  = "Interface"
   private_dns_enabled = true
-  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-dkr-endpoint" })
 }
@@ -76,7 +76,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
 resource "aws_vpc_endpoint" "s3" {
   vpc_id          = module.vpc["app1_vpc"].id
   service_name    = "com.amazonaws.${var.region}.s3"
-  route_table_ids = [module.subnet_sets["app1_vpc-app1_vm"].unique_route_table_ids["us-east-1a"], module.subnet_sets["app1_vpc-app1_vm"].unique_route_table_ids["us-east-1b"]]
+  route_table_ids = [module.subnet_sets["app1_vpc-app1_vm"].unique_route_table_ids["${var.region}a"], module.subnet_sets["app1_vpc-app1_vm"].unique_route_table_ids["${var.region}b"]]
   tags            = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-s3-endpoint" })
 }
 
@@ -85,7 +85,7 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
   service_name       = "com.amazonaws.${var.region}.logs"
   vpc_endpoint_type  = "Interface"
   private_dns_enabled = true
-  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-logs-endpoint" })
 }
@@ -95,7 +95,7 @@ resource "aws_vpc_endpoint" "sts" {
   service_name       = "com.amazonaws.${var.region}.sts"
   vpc_endpoint_type  = "Interface"
   private_dns_enabled = true
-  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-sts-endpoint" })
 }
@@ -105,7 +105,7 @@ resource "aws_vpc_endpoint" "ec2" {
   service_name       = "com.amazonaws.${var.region}.ec2"
   vpc_endpoint_type  = "Interface"
   private_dns_enabled = true
-  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id]
+  subnet_ids         = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id]
   security_group_ids = [module.vpc["app1_vpc"].security_group_ids["app1_vm"]]
   tags               = merge(var.global_tags, { "Name" = "${var.name_prefix}spoke1-ec2-endpoint" })
 }
@@ -198,7 +198,7 @@ module "eks_al2023" {
   }
 
   vpc_id     = module.vpc["app1_vpc"].id
-  subnet_ids = [module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["us-east-1b"].id] ##TODO fix this
+  subnet_ids = [module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}a"].id, module.subnet_sets["app1_vpc-app1_vm"].subnets["${var.region}b"].id] ##TODO fix this
 
   eks_managed_node_group_defaults = {
     # enable_bootstrap_user_data = true
