@@ -517,7 +517,10 @@ resource "aws_iam_role_policy" "vm_series_ec2_iam_policy" {
       "Action": [
         "cloudwatch:PutMetricData",
         "cloudwatch:GetMetricData",
-        "cloudwatch:ListMetrics"
+        "cloudwatch:ListMetrics",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
       ],
       "Resource": [
         "*"
