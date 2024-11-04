@@ -352,7 +352,7 @@ EOT
       name = "${var.name_prefix}eks-node-group"
       # ami_type                               = "AL2023_x86_64_STANDARD"
       # instance_types                         = ["m6i.large"]
-      instance_types                         = ["t3.small"]
+      instance_types                         = ["t3.medium"]
       key_name                               = data.aws_key_pair.ec2.key_name
       cluster_tags = var.global_tags
       create_cluster_primary_security_group_tags = true
