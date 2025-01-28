@@ -386,26 +386,26 @@ EOT
 
 ## Set IAM role mapping
 
-# module "eks" {
-#   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-#   version = "~> 20.0"
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+  version = "~> 20.0"
 
-#   manage_aws_auth_configmap = true
+  manage_aws_auth_configmap = true
 
-#   aws_auth_roles = [
-#     {
-#       rolearn  = var.user_iam_role
-#       username = "labuser"
-#       groups   = ["system:masters"]
-#     },
-#     {
-#       rolearn  = var.codebuild_iam_role
-#       username = "codebuild"
-#       groups   = ["system:masters"]
-#     },
-#   ]
-#   depends_on = [module.eks_al2023]
-# }
+  aws_auth_roles = [
+    {
+      rolearn  = var.user_iam_role
+      username = "labuser"
+      groups   = ["system:masters"]
+    },
+    {
+      rolearn  = var.codebuild_iam_role
+      username = "codebuild"
+      groups   = ["system:masters"]
+    },
+  ]
+  depends_on = [module.eks_al2023]
+}
 
 resource "null_resource" "aws_auth_configmap" {
   depends_on = [module.eks_al2023]
