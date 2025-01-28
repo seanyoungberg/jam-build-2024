@@ -394,7 +394,8 @@ module "eks" {
 
   aws_auth_roles = [
     {
-      rolearn  = var.user_iam_role
+      #rolearn  = var.user_iam_role
+      rolearn  = "arn:aws:iam::${data.aws_caller_identity.this.account_id}:user/awsstudent"
       username = "labuser"
       groups   = ["system:masters"]
     },
